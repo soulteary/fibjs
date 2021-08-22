@@ -25,14 +25,6 @@ namespace fibjs {
 
 DECLARE_MODULE(gui);
 
-#ifdef WIN32
-#define os_dirname _dirname_win32
-#define os_normalize _normalize_win32
-#else
-#define os_dirname _dirname
-#define os_normalize _normalize
-#endif
-
 #if defined(Darwin)
 const char* s_cef_sdk = "Chromium Embedded Framework";
 #elif defined(Windows)
@@ -55,6 +47,15 @@ exlib::string GuiApp::get_path(const char* p)
     return str_res;
 }
 
+bool _exists(exlib::string path)
+{
+#ifdef _WIN32
+    return _waccess(UTF8_W(path), 0) == 0;
+#else
+    return ::access(path.c_str(), F_OK) == 0;
+#endif
+}
+
 void GuiApp::load_cef()
 {
     exlib::string str_path;
@@ -69,7 +70,7 @@ void GuiApp::load_cef()
         os_dirname(str_exe, m_cef_path);
 
     exlib::string str_cef = get_path(s_cef_sdk);
-    fs_base::cc_exists(str_cef, m_has_cef);
+    m_has_cef = _exists(str_cef);
     if (!m_has_cef) {
         m_gui_ready.set();
         run_os_gui();
@@ -315,7 +316,7 @@ result_t GuiApp::config(v8::Local<v8::Object> opt)
         for (i = 0; i < len; i++) {
             std::map<exlib::string, CefRefPtr<GuiSchemeHandlerFactory>>::iterator it;
             JSValue k = ks->Get(i);
-            exlib::string ks(ToCString(v8::String::Utf8Value(isolate->m_isolate, k)));
+            exlib::string ks(isolate->toString(k));
             Url u;
             exlib::string scheme;
 
@@ -363,5 +364,4 @@ result_t gui_base::config(v8::Local<v8::Object> opt)
 {
     return g_app->config(opt);
 }
-
 }

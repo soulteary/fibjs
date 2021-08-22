@@ -141,7 +141,7 @@ inline bool checkArray(QuickArray<exlib::string>& a, const char* chks[], int32_t
 
 inline bool is_num_type(int32_t _type)
 {
-    return _type == profiler_base::_Edge_Element || _type == profiler_base::_Edge_Hidden;
+    return _type == profiler_base::C_Edge_Element || _type == profiler_base::C_Edge_Hidden;
 }
 
 result_t HeapSnapshot::load(exlib::string fname)
@@ -428,7 +428,7 @@ result_t HeapSnapshot::save(exlib::string fname, AsyncEvent* ac)
     if (hr < 0)
         return hr;
 
-    m_nodes->get_length(count);
+    count = m_nodes->length();
     for (i = 0; i < count; i++) {
         Variant v;
         HeapGraphNode* cur;
@@ -440,7 +440,7 @@ result_t HeapSnapshot::save(exlib::string fname, AsyncEvent* ac)
 
         cur->get_childs(childs);
 
-        childs->get_length(n);
+        n = childs->length();
         child_count += n;
     }
 
@@ -466,7 +466,7 @@ result_t HeapSnapshot::save(exlib::string fname, AsyncEvent* ac)
         _name_id = _ids.id(_name);
 
         cur->get_childs(childs);
-        childs->get_length(_child);
+        _child = childs->length();
 
         if (i == 0)
             n = sprintf(buf, "%d,%d,%d,%d,%d,0\n", _type, _name_id, _id, _size, _child);
@@ -487,7 +487,7 @@ result_t HeapSnapshot::save(exlib::string fname, AsyncEvent* ac)
         HeapGraphNode_base* cur = nodes[i];
 
         cur->get_childs(childs);
-        childs->get_length(_child);
+        _child = childs->length();
 
         for (int32_t j = 0; j < _child; j++) {
             Variant v;

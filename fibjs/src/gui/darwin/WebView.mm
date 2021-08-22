@@ -125,7 +125,7 @@ WebView::WebView(exlib::string url, NObject* opt)
     : m_bDebug(true)
     , m_bIScriptLoaded(false)
 {
-    holder()->Ref();
+    isolate_ref();
 
     m_opt = opt;
     m_url = url;
@@ -159,7 +159,7 @@ bool WebView::onNSWindowShouldClose()
         ^(id result, NSError* _Nullable error) {
             if (error != nil) {
                 if (m_bDebug)
-                    asyncLog(console_base::_DEBUG, NSStringToExString([error localizedDescription]));
+                    asyncLog(console_base::C_DEBUG, NSStringToExString([error localizedDescription]));
 
                 forceCloseWindow();
             } else {
@@ -206,9 +206,9 @@ static int32_t asyncOutputMessageFromWKWebview(exlib::string& jsonFmt)
     int32_t logLevel = isolate->toInteger(JSValue(logInfo->Get(isolate->NewString("level"))));
 
     v8::Local<v8::Value> _fmtMessage = logInfo->Get(isolate->NewString("fmt"));
-    exlib::string fmtMessage(ToCString(v8::String::Utf8Value(isolate->m_isolate, _fmtMessage)));
+    exlib::string fmtMessage(isolate->toString(_fmtMessage));
 
-    if (logLevel == console_base::_ERROR)
+    if (logLevel == console_base::C_ERROR)
         fmtMessage = ("WebView Error: " + fmtMessage);
 
     asyncLog(logLevel, fmtMessage);
@@ -327,8 +327,7 @@ void WebView::initNSWindow()
 
 void WebView::initWKWebView()
 {
-    m_wkWebView = [
-        [WKWebView alloc]
+    m_wkWebView = [[WKWebView alloc]
         initWithFrame:CGRectMake(0, 0, 400, 300)
         configuration:createWKWebViewConfig()];
 

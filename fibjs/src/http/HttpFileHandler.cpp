@@ -16,7 +16,6 @@
 #include "Url.h"
 #include "Buffer.h"
 #include "MemoryStream.h"
-#include "Stat.h"
 
 namespace fibjs {
 
@@ -1166,7 +1165,7 @@ result_t HttpFileHandler::set_mimes(v8::Local<v8::Object> mimes)
         if (hr < 0)
             return CHECK_ERROR(hr);
 
-        m_mimes.insert(std::pair<exlib::string, exlib::string>(ToCString(v8::String::Utf8Value(isolate->m_isolate, ks)), s));
+        m_mimes.insert(std::pair<exlib::string, exlib::string>(isolate->toString(ks), s));
     }
 
     return 0;
@@ -1246,7 +1245,7 @@ result_t HttpFileHandler::invoke(object_base* v, obj_ptr<Handler_base>& retVal,
             static char padding[] = "                                                              ";
             obj_ptr<Buffer_base> buf;
 
-            m_dir->get_length(length);
+            length = m_dir->length();
 
             if (m_dirPos == 0) {
                 m_dir->sort();

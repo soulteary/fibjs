@@ -184,6 +184,14 @@ public:
         return o;
     }
 
+    void safe_release()
+    {
+        if (m_isolate)
+            syncCall(m_isolate, final_release, this);
+        else
+            final_release(this);
+    }
+
 public:
     class scope {
     public:
@@ -215,6 +223,7 @@ public:
     result_t off(exlib::string ev, v8::Local<v8::Function> func, v8::Local<v8::Object>& retVal);
     result_t off(exlib::string ev, v8::Local<v8::Object>& retVal);
     result_t off(v8::Local<v8::Object> map, v8::Local<v8::Object>& retVal);
+    result_t removeAllListeners(exlib::string ev, v8::Local<v8::Object>& retVal);
     result_t removeAllListeners(v8::Local<v8::Array> evs, v8::Local<v8::Object>& retVal);
     result_t setMaxListeners(int32_t n);
     result_t getMaxListeners(int32_t& retVal);
@@ -285,7 +294,7 @@ private:
 
 public:
     template <typename T>
-    static void __new(const T& args) { }
+    static void __new(const T& args) {}
 
 public:
     v8::Local<v8::Object> GetPrivateObject()
@@ -385,7 +394,7 @@ public:
 
         exlib::string strError = "Property \'";
 
-        strError += ToCString(v8::String::Utf8Value(isolate->m_isolate, property));
+        strError += isolate->toString(property);
         strError += "\' is read-only.";
         isolate->m_isolate->ThrowException(
             isolate->NewString(strError));
@@ -438,14 +447,7 @@ public:
     virtual void Unref()
     {
         if (internalUnref() == 0)
-            syncCall(m_isolate, _release, this);
-    }
-
-private:
-    static result_t _release(ValueHolder* pThis)
-    {
-        delete pThis;
-        return 0;
+            syncCall(m_isolate, final_release, this);
     }
 
 private:

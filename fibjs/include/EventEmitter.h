@@ -186,8 +186,7 @@ public:
                 JSValue v = m->Get(k);
 
                 if (v->IsFunction())
-                    (this->*fn)(ToCString(v8::String::Utf8Value(isolate, k)),
-                        v8::Local<v8::Function>::Cast(v), retVal);
+                    (this->*fn)(ToString(isolate, k), v8::Local<v8::Function>::Cast(v), retVal);
                 else
                     return CHECK_ERROR(CALL_E_BADVARTYPE);
             }
@@ -327,11 +326,21 @@ public:
         return _map(map, &JSTrigger::off, retVal);
     }
 
+    result_t removeAllListeners(exlib::string ev, v8::Local<v8::Object>& retVal)
+    {
+        return off(ev, retVal);
+    }
+
     result_t removeAllListeners(v8::Local<v8::Array> evs, v8::Local<v8::Object>& retVal)
     {
         int32_t len = evs->Length();
         int32_t i;
         result_t hr;
+
+        if (len == 0) {
+            evs = events->GetPropertyNames();
+            len = evs->Length();
+        }
 
         for (i = 0; i < len; i++) {
             JSValue v = evs->Get(i);
@@ -648,6 +657,12 @@ public:
 
         METHOD_NAME("EventEmitter.removeAllListeners");
         METHOD_ENTER();
+
+        METHOD_OVER(1, 1);
+
+        ARG(exlib::string, 0);
+
+        hr = t.removeAllListeners(v0, vr);
 
         METHOD_OVER(1, 0);
 

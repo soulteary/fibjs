@@ -27,7 +27,7 @@ inline int32_t ftruncate64(int32_t fd, __int64 where)
     return 0;
 }
 
-#define S_ISLNK(m) 0
+#define S_ISLNK(m) (((m)&S_IFMT) == S_IFLNK)
 
 #ifdef _MSC_VER
 #define stat64 _stati64
@@ -92,9 +92,7 @@ public:
     virtual result_t isSocket(bool& retVal);
 
 public:
-    result_t getStat(exlib::string path);
-    result_t getLstat(exlib::string path);
-    void fill(exlib::string path, uv_stat_t* statbuf);
+    void fill(exlib::string path, const uv_stat_t* statbuf);
 
     void init();
     void init(Stat_base* st);

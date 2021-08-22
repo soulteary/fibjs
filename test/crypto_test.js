@@ -195,16 +195,40 @@ describe('crypto', () => {
 
     it("random", () => {
         assert.notEqual(crypto.randomBytes(8).hex(), crypto.randomBytes(8).hex());
+
+        assert.throws(() => {
+            crypto.randomBytes(-125);
+        });
+    });
+
+    it("simpleRandomBytes", () => {
+        assert.notEqual(crypto.simpleRandomBytes(8).hex(), crypto.simpleRandomBytes(8).hex());
+
+        assert.throws(() => {
+            crypto.simpleRandomBytes(-125);
+        });
     });
 
     it("pseudoRandomBytes", () => {
         assert.notEqual(crypto.pseudoRandomBytes(8).hex(), crypto.pseudoRandomBytes(8).hex());
+
+        assert.throws(() => {
+            crypto.pseudoRandomBytes(-125);
+        });
     });
 
     it("randomArt", () => {
         assert.notEqual(crypto.randomArt(data, "lion"), art1);
         assert.notEqual(crypto.randomArt(data, ""), art2);
         assert.notEqual(crypto.randomArt(data, "01234567890123456789"), art3);
+
+        assert.throws(() => {
+            crypto.randomArt(data, "title", 0);
+        });
+
+        assert.throws(() => {
+            crypto.randomArt(undefined, '', 1064203628);
+        });
     });
 
     describe('Cipher', () => {
@@ -1148,6 +1172,27 @@ describe('crypto', () => {
         });
     });
 
+    it("getHashes", () => {
+        var hashes = crypto.getHashes();
+        assert.isArray(hashes);
+
+        assert.greaterThan(hashes.length, 1);
+
+        assert.isTrue(hashes.includes('md5'))
+        assert.isTrue(hashes.includes('sha384'))
+    });
+
+    it("FIX: Illegal iterations and size parameters will cause crypto.pbkdf1 to crash", () => {
+        assert.throws(() => {
+            crypto.pbkdf1(null, null, 0, -1, 1);
+        })
+    });
+
+    it("FIX: Illegal iterations and size parameters will cause crypto.pbkdf2 to crash", () => {
+        assert.throws(() => {
+            crypto.pbkdf2(null, null, 0, -1, 1);
+        })
+    });
 });
 
 require.main === module && test.run(console.DEBUG);

@@ -16,7 +16,7 @@ namespace fibjs {
 size_t HttpCollection::size()
 {
     size_t sz = 0;
-    int32_t i;
+    size_t i;
 
     for (i = 0; i < m_count; i++) {
         pair& _pair = m_map[i];
@@ -42,7 +42,7 @@ inline void cp(char* buf, size_t sz, size_t& pos, const char* str, size_t szStr)
 size_t HttpCollection::getData(char* buf, size_t sz)
 {
     size_t pos = 0;
-    int32_t i;
+    size_t i;
 
     for (i = 0; i < m_count; i++) {
         pair& _pair = m_map[i];
@@ -60,7 +60,7 @@ size_t HttpCollection::getData(char* buf, size_t sz)
 
 result_t HttpCollection::clear()
 {
-    int32_t i;
+    size_t i;
 
     for (i = 0; i < m_count; i++) {
         pair& _pair = m_map[i];
@@ -191,7 +191,7 @@ result_t HttpCollection::parseCookie(exlib::string& str)
 
 result_t HttpCollection::has(exlib::string name, bool& retVal)
 {
-    int32_t i;
+    size_t i;
 
     retVal = false;
     for (i = 0; i < m_count; i++)
@@ -205,7 +205,7 @@ result_t HttpCollection::has(exlib::string name, bool& retVal)
 
 result_t HttpCollection::first(exlib::string name, Variant& retVal)
 {
-    int32_t i;
+    size_t i;
 
     for (i = 0; i < m_count; i++) {
         pair& _pair = m_map[i];
@@ -255,9 +255,9 @@ result_t HttpCollection::add(v8::Local<v8::Object> map)
             return CALL_E_JAVASCRIPT;
 
         if (v->IsArray())
-            add(ToCString(v8::String::Utf8Value(isolate->m_isolate, k)), v8::Local<v8::Array>::Cast(v));
+            add(isolate->toString(k), v8::Local<v8::Array>::Cast(v));
         else
-            add(ToCString(v8::String::Utf8Value(isolate->m_isolate, k)), (Variant)v);
+            add(isolate->toString(k), (Variant)v);
     }
 
     return 0;
@@ -295,9 +295,9 @@ result_t HttpCollection::set(v8::Local<v8::Object> map)
             return CALL_E_JAVASCRIPT;
 
         if (v->IsArray())
-            set(ToCString(v8::String::Utf8Value(isolate->m_isolate, k)), v8::Local<v8::Array>::Cast(v));
+            set(isolate->toString(k), v8::Local<v8::Array>::Cast(v));
         else
-            set(ToCString(v8::String::Utf8Value(isolate->m_isolate, k)), (Variant)v);
+            set(isolate->toString(k), (Variant)v);
     }
 
     return 0;
@@ -317,7 +317,7 @@ result_t HttpCollection::set(exlib::string name, v8::Local<v8::Array> values)
 
 result_t HttpCollection::remove(exlib::string name)
 {
-    int32_t i;
+    size_t i;
     int32_t p = 0;
 
     for (i = 0; i < m_count; i++) {
@@ -354,7 +354,7 @@ result_t HttpCollection::sort()
 result_t HttpCollection::keys(obj_ptr<NArray>& retVal)
 {
     obj_ptr<NArray> _keys = new NArray();
-    int i;
+    size_t i;
 
     for (i = 0; i < m_count; i++)
         _keys->append(m_map[i].first);
@@ -367,7 +367,7 @@ result_t HttpCollection::keys(obj_ptr<NArray>& retVal)
 result_t HttpCollection::values(obj_ptr<NArray>& retVal)
 {
     obj_ptr<NArray> _keys = new NArray();
-    int i;
+    size_t i;
 
     for (i = 0; i < m_count; i++)
         _keys->append(m_map[i].second);
@@ -378,7 +378,7 @@ result_t HttpCollection::values(obj_ptr<NArray>& retVal)
 
 result_t HttpCollection::_named_getter(exlib::string property, Variant& retVal)
 {
-    int32_t i;
+    size_t i;
     int32_t n = 0;
     Variant v;
     v8::Local<v8::Array> a;
@@ -414,7 +414,8 @@ result_t HttpCollection::_named_getter(exlib::string property, Variant& retVal)
 
 result_t HttpCollection::_named_enumerator(v8::Local<v8::Array>& retVal)
 {
-    int32_t i, n;
+    size_t i;
+    int32_t n;
     std::set<exlib::string> name_set;
     Isolate* isolate = holder();
 
@@ -436,7 +437,7 @@ result_t HttpCollection::_named_setter(exlib::string property, Variant newVal)
 result_t HttpCollection::_named_deleter(exlib::string property,
     v8::Local<v8::Boolean>& retVal)
 {
-    int32_t n = m_count;
+    size_t n = m_count;
     remove(property);
     return n > m_count;
 }

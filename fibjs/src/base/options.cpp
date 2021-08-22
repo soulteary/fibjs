@@ -29,6 +29,8 @@ FILE* g_cov = nullptr;
 bool g_tcpdump = false;
 bool g_ssldump = false;
 
+bool g_uv_socket = false;
+
 bool g_cefprocess = false;
 
 #ifdef DEBUG
@@ -41,8 +43,9 @@ static class _init_v8_opt {
 public:
     _init_v8_opt()
     {
-        v8::internal::FLAG_lazy = false;
+        // v8::internal::FLAG_lazy = false;
         v8::internal::FLAG_stack_size = stack_size - GUARD_SIZE;
+        v8::internal::FLAG_max_old_space_size = 2048;
 
         v8::internal::FLAG_wasm_async_compilation = false;
 
@@ -64,8 +67,13 @@ static void printHelp()
          "  --tcpdump            print out the contents of the tcp package.\n"
          "  --ssldump            print out the contents of the ssl package.\n"
          "\n"
+         "  --use-uv-socket[=on|off]\n"
+         "                       use uv as socket backend.\n"
+         "\n"
          "  --init               write a package.json file.\n"
-         "  --install            install the dependencies in the local node_modules folder.\n"
+         "  --install [opt] foo  install the dependencies in the local node_modules folder.\n"
+         "    -S, --save         save package config to dependencies.\n"
+         "    -D, --save-dev     save package config to devDependencies.\n"
          "\n"
          "  --prof               log statistical profiling information.\n"
          "  --prof-interval=n    interval for --prof samples (in microseconds, default: 1000).\n"
@@ -85,7 +93,7 @@ void DcheckHandler(const char* file, int line, const char* message)
 {
     char p_msg[256];
     sprintf(p_msg, "Assert(DCheck) in %s, line %d: %s", file, line, message);
-    asyncLog(console_base::_DEBUG, p_msg);
+    asyncLog(console_base::C_DEBUG, p_msg);
 }
 #endif
 
@@ -129,6 +137,9 @@ void options(int32_t& pos, char* argv[])
             df++;
         } else if (!qstrcmp(arg, "--ssldump")) {
             g_ssldump = true;
+            df++;
+        } else if (!qstrcmp(arg, "--use-uv-socket", 15)) {
+            g_uv_socket = (arg[15] == 0 || !qstrcmp(arg + 15, "=on"));
             df++;
         } else if (!qstrcmp(arg, "--prof")) {
             g_prof = true;

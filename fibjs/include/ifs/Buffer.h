@@ -15,6 +15,8 @@
 
 namespace fibjs {
 
+class Iterator_base;
+
 class Buffer_base : public object_base {
     DECLARE_CLASS(Buffer_base);
 
@@ -46,6 +48,7 @@ public:
     static result_t isEncoding(exlib::string codec, bool& retVal);
     virtual result_t _indexed_getter(uint32_t index, int32_t& retVal) = 0;
     virtual result_t _indexed_setter(uint32_t index, int32_t newVal) = 0;
+    virtual result_t symbol_iterator(obj_ptr<Iterator_base>& retVal) = 0;
     virtual result_t get_length(int32_t& retVal) = 0;
     virtual result_t resize(int32_t sz) = 0;
     virtual result_t append(Buffer_base* data) = 0;
@@ -61,46 +64,46 @@ public:
     virtual result_t indexOf(exlib::string v, int32_t offset, int32_t& retVal) = 0;
     virtual result_t copy(Buffer_base* targetBuffer, int32_t targetStart, int32_t sourceStart, int32_t sourceEnd, int32_t& retVal) = 0;
     virtual result_t set(Buffer_base* src, int32_t start, int32_t& retVal) = 0;
-    virtual result_t readUInt8(int32_t offset, bool noAssert, int32_t& retVal) = 0;
-    virtual result_t readUInt16LE(int32_t offset, bool noAssert, int32_t& retVal) = 0;
-    virtual result_t readUInt16BE(int32_t offset, bool noAssert, int32_t& retVal) = 0;
-    virtual result_t readUInt32LE(int32_t offset, bool noAssert, int64_t& retVal) = 0;
-    virtual result_t readUInt32BE(int32_t offset, bool noAssert, int64_t& retVal) = 0;
-    virtual result_t readUIntLE(int32_t offset, int32_t byteLength, bool noAssert, int64_t& retVal) = 0;
-    virtual result_t readUIntBE(int32_t offset, int32_t byteLength, bool noAssert, int64_t& retVal) = 0;
-    virtual result_t readInt64LE(int32_t offset, bool noAssert, int64_t& retVal) = 0;
-    virtual result_t readInt64BE(int32_t offset, bool noAssert, int64_t& retVal) = 0;
-    virtual result_t readInt8(int32_t offset, bool noAssert, int32_t& retVal) = 0;
-    virtual result_t readInt16LE(int32_t offset, bool noAssert, int32_t& retVal) = 0;
-    virtual result_t readInt16BE(int32_t offset, bool noAssert, int32_t& retVal) = 0;
-    virtual result_t readInt32LE(int32_t offset, bool noAssert, int32_t& retVal) = 0;
-    virtual result_t readInt32BE(int32_t offset, bool noAssert, int32_t& retVal) = 0;
-    virtual result_t readIntLE(int32_t offset, int32_t byteLength, bool noAssert, int64_t& retVal) = 0;
-    virtual result_t readIntBE(int32_t offset, int32_t byteLength, bool noAssert, int64_t& retVal) = 0;
-    virtual result_t writeInt64LE(int64_t value, int32_t offset, bool noAssert, int32_t& retVal) = 0;
-    virtual result_t writeInt64BE(int64_t value, int32_t offset, bool noAssert, int32_t& retVal) = 0;
-    virtual result_t readFloatLE(int32_t offset, bool noAssert, double& retVal) = 0;
-    virtual result_t readFloatBE(int32_t offset, bool noAssert, double& retVal) = 0;
-    virtual result_t readDoubleLE(int32_t offset, bool noAssert, double& retVal) = 0;
-    virtual result_t readDoubleBE(int32_t offset, bool noAssert, double& retVal) = 0;
-    virtual result_t writeUInt8(int32_t value, int32_t offset, bool noAssert, int32_t& retVal) = 0;
-    virtual result_t writeUInt16LE(int32_t value, int32_t offset, bool noAssert, int32_t& retVal) = 0;
-    virtual result_t writeUInt16BE(int32_t value, int32_t offset, bool noAssert, int32_t& retVal) = 0;
-    virtual result_t writeUInt32LE(int64_t value, int32_t offset, bool noAssert, int32_t& retVal) = 0;
-    virtual result_t writeUInt32BE(int64_t value, int32_t offset, bool noAssert, int32_t& retVal) = 0;
-    virtual result_t writeUIntLE(int64_t value, int32_t offset, int32_t byteLength, bool noAssert, int32_t& retVal) = 0;
-    virtual result_t writeUIntBE(int64_t value, int32_t offset, int32_t byteLength, bool noAssert, int32_t& retVal) = 0;
-    virtual result_t writeInt8(int32_t value, int32_t offset, bool noAssert, int32_t& retVal) = 0;
-    virtual result_t writeInt16LE(int32_t value, int32_t offset, bool noAssert, int32_t& retVal) = 0;
-    virtual result_t writeInt16BE(int32_t value, int32_t offset, bool noAssert, int32_t& retVal) = 0;
-    virtual result_t writeInt32LE(int32_t value, int32_t offset, bool noAssert, int32_t& retVal) = 0;
-    virtual result_t writeInt32BE(int32_t value, int32_t offset, bool noAssert, int32_t& retVal) = 0;
-    virtual result_t writeIntLE(int64_t value, int32_t offset, int32_t byteLength, bool noAssert, int32_t& retVal) = 0;
-    virtual result_t writeIntBE(int64_t value, int32_t offset, int32_t byteLength, bool noAssert, int32_t& retVal) = 0;
-    virtual result_t writeFloatLE(double value, int32_t offset, bool noAssert, int32_t& retVal) = 0;
-    virtual result_t writeFloatBE(double value, int32_t offset, bool noAssert, int32_t& retVal) = 0;
-    virtual result_t writeDoubleLE(double value, int32_t offset, bool noAssert, int32_t& retVal) = 0;
-    virtual result_t writeDoubleBE(double value, int32_t offset, bool noAssert, int32_t& retVal) = 0;
+    virtual result_t readUInt8(int32_t offset, int32_t& retVal) = 0;
+    virtual result_t readUInt16LE(int32_t offset, int32_t& retVal) = 0;
+    virtual result_t readUInt16BE(int32_t offset, int32_t& retVal) = 0;
+    virtual result_t readUInt32LE(int32_t offset, int64_t& retVal) = 0;
+    virtual result_t readUInt32BE(int32_t offset, int64_t& retVal) = 0;
+    virtual result_t readUIntLE(int32_t offset, int32_t byteLength, int64_t& retVal) = 0;
+    virtual result_t readUIntBE(int32_t offset, int32_t byteLength, int64_t& retVal) = 0;
+    virtual result_t readInt64LE(int32_t offset, int64_t& retVal) = 0;
+    virtual result_t readInt64BE(int32_t offset, int64_t& retVal) = 0;
+    virtual result_t readInt8(int32_t offset, int32_t& retVal) = 0;
+    virtual result_t readInt16LE(int32_t offset, int32_t& retVal) = 0;
+    virtual result_t readInt16BE(int32_t offset, int32_t& retVal) = 0;
+    virtual result_t readInt32LE(int32_t offset, int32_t& retVal) = 0;
+    virtual result_t readInt32BE(int32_t offset, int32_t& retVal) = 0;
+    virtual result_t readIntLE(int32_t offset, int32_t byteLength, int64_t& retVal) = 0;
+    virtual result_t readIntBE(int32_t offset, int32_t byteLength, int64_t& retVal) = 0;
+    virtual result_t writeInt64LE(int64_t value, int32_t offset, int32_t& retVal) = 0;
+    virtual result_t writeInt64BE(int64_t value, int32_t offset, int32_t& retVal) = 0;
+    virtual result_t readFloatLE(int32_t offset, double& retVal) = 0;
+    virtual result_t readFloatBE(int32_t offset, double& retVal) = 0;
+    virtual result_t readDoubleLE(int32_t offset, double& retVal) = 0;
+    virtual result_t readDoubleBE(int32_t offset, double& retVal) = 0;
+    virtual result_t writeUInt8(int32_t value, int32_t offset, int32_t& retVal) = 0;
+    virtual result_t writeUInt16LE(int32_t value, int32_t offset, int32_t& retVal) = 0;
+    virtual result_t writeUInt16BE(int32_t value, int32_t offset, int32_t& retVal) = 0;
+    virtual result_t writeUInt32LE(int64_t value, int32_t offset, int32_t& retVal) = 0;
+    virtual result_t writeUInt32BE(int64_t value, int32_t offset, int32_t& retVal) = 0;
+    virtual result_t writeUIntLE(int64_t value, int32_t offset, int32_t byteLength, int32_t& retVal) = 0;
+    virtual result_t writeUIntBE(int64_t value, int32_t offset, int32_t byteLength, int32_t& retVal) = 0;
+    virtual result_t writeInt8(int32_t value, int32_t offset, int32_t& retVal) = 0;
+    virtual result_t writeInt16LE(int32_t value, int32_t offset, int32_t& retVal) = 0;
+    virtual result_t writeInt16BE(int32_t value, int32_t offset, int32_t& retVal) = 0;
+    virtual result_t writeInt32LE(int32_t value, int32_t offset, int32_t& retVal) = 0;
+    virtual result_t writeInt32BE(int32_t value, int32_t offset, int32_t& retVal) = 0;
+    virtual result_t writeIntLE(int64_t value, int32_t offset, int32_t byteLength, int32_t& retVal) = 0;
+    virtual result_t writeIntBE(int64_t value, int32_t offset, int32_t byteLength, int32_t& retVal) = 0;
+    virtual result_t writeFloatLE(double value, int32_t offset, int32_t& retVal) = 0;
+    virtual result_t writeFloatBE(double value, int32_t offset, int32_t& retVal) = 0;
+    virtual result_t writeDoubleLE(double value, int32_t offset, int32_t& retVal) = 0;
+    virtual result_t writeDoubleBE(double value, int32_t offset, int32_t& retVal) = 0;
     virtual result_t slice(int32_t start, obj_ptr<Buffer_base>& retVal) = 0;
     virtual result_t slice(int32_t start, int32_t end, obj_ptr<Buffer_base>& retVal) = 0;
     virtual result_t join(exlib::string separator, exlib::string& retVal) = 0;
@@ -108,9 +111,9 @@ public:
     virtual result_t equals(object_base* expected, bool& retVal) = 0;
     virtual result_t hex(exlib::string& retVal) = 0;
     virtual result_t base64(exlib::string& retVal) = 0;
-    virtual result_t keys(v8::Local<v8::Object>& retVal) = 0;
-    virtual result_t values(v8::Local<v8::Object>& retVal) = 0;
-    virtual result_t entries(v8::Local<v8::Object>& retVal) = 0;
+    virtual result_t keys(obj_ptr<Iterator_base>& retVal) = 0;
+    virtual result_t values(obj_ptr<Iterator_base>& retVal) = 0;
+    virtual result_t entries(obj_ptr<Iterator_base>& retVal) = 0;
     virtual result_t toArray(v8::Local<v8::Array>& retVal) = 0;
     virtual result_t toString(exlib::string codec, int32_t offset, int32_t end, exlib::string& retVal) = 0;
     virtual result_t toString(exlib::string codec, int32_t offset, exlib::string& retVal) = 0;
@@ -134,6 +137,7 @@ public:
     static void s_static_isEncoding(const v8::FunctionCallbackInfo<v8::Value>& args);
     static void i_IndexedGetter(uint32_t index, const v8::PropertyCallbackInfo<v8::Value>& args);
     static void i_IndexedSetter(uint32_t index, v8::Local<v8::Value> value, const v8::PropertyCallbackInfo<v8::Value>& args);
+    static void s_symbol_iterator(const v8::FunctionCallbackInfo<v8::Value>& args);
     static void s_get_length(v8::Local<v8::Name> property, const v8::PropertyCallbackInfo<v8::Value>& args);
     static void s_resize(const v8::FunctionCallbackInfo<v8::Value>& args);
     static void s_append(const v8::FunctionCallbackInfo<v8::Value>& args);
@@ -196,6 +200,8 @@ public:
 };
 }
 
+#include "ifs/Iterator.h"
+
 namespace fibjs {
 inline ClassInfo& Buffer_base::class_info()
 {
@@ -210,6 +216,7 @@ inline ClassInfo& Buffer_base::class_info()
         { "compare", s_compare, false },
         { "compare", s_static_compare, true },
         { "isEncoding", s_static_isEncoding, true },
+        { "@iterator", s_symbol_iterator, false },
         { "resize", s_resize, false },
         { "append", s_append, false },
         { "write", s_write, false },
@@ -599,6 +606,21 @@ inline void Buffer_base::i_IndexedSetter(uint32_t index, v8::Local<v8::Value> va
     METHOD_VOID();
 }
 
+inline void Buffer_base::s_symbol_iterator(const v8::FunctionCallbackInfo<v8::Value>& args)
+{
+    obj_ptr<Iterator_base> vr;
+
+    METHOD_NAME("Buffer.@iterator");
+    METHOD_INSTANCE(Buffer_base);
+    METHOD_ENTER();
+
+    METHOD_OVER(0, 0);
+
+    hr = pInst->symbol_iterator(vr);
+
+    METHOD_RETURN();
+}
+
 inline void Buffer_base::s_get_length(v8::Local<v8::Name> property, const v8::PropertyCallbackInfo<v8::Value>& args)
 {
     int32_t vr;
@@ -797,12 +819,11 @@ inline void Buffer_base::s_readUInt8(const v8::FunctionCallbackInfo<v8::Value>& 
     METHOD_INSTANCE(Buffer_base);
     METHOD_ENTER();
 
-    METHOD_OVER(2, 0);
+    METHOD_OVER(1, 0);
 
     OPT_ARG(int32_t, 0, 0);
-    OPT_ARG(bool, 1, false);
 
-    hr = pInst->readUInt8(v0, v1, vr);
+    hr = pInst->readUInt8(v0, vr);
 
     METHOD_RETURN();
 }
@@ -815,12 +836,11 @@ inline void Buffer_base::s_readUInt16LE(const v8::FunctionCallbackInfo<v8::Value
     METHOD_INSTANCE(Buffer_base);
     METHOD_ENTER();
 
-    METHOD_OVER(2, 0);
+    METHOD_OVER(1, 0);
 
     OPT_ARG(int32_t, 0, 0);
-    OPT_ARG(bool, 1, false);
 
-    hr = pInst->readUInt16LE(v0, v1, vr);
+    hr = pInst->readUInt16LE(v0, vr);
 
     METHOD_RETURN();
 }
@@ -833,12 +853,11 @@ inline void Buffer_base::s_readUInt16BE(const v8::FunctionCallbackInfo<v8::Value
     METHOD_INSTANCE(Buffer_base);
     METHOD_ENTER();
 
-    METHOD_OVER(2, 0);
+    METHOD_OVER(1, 0);
 
     OPT_ARG(int32_t, 0, 0);
-    OPT_ARG(bool, 1, false);
 
-    hr = pInst->readUInt16BE(v0, v1, vr);
+    hr = pInst->readUInt16BE(v0, vr);
 
     METHOD_RETURN();
 }
@@ -851,12 +870,11 @@ inline void Buffer_base::s_readUInt32LE(const v8::FunctionCallbackInfo<v8::Value
     METHOD_INSTANCE(Buffer_base);
     METHOD_ENTER();
 
-    METHOD_OVER(2, 0);
+    METHOD_OVER(1, 0);
 
     OPT_ARG(int32_t, 0, 0);
-    OPT_ARG(bool, 1, false);
 
-    hr = pInst->readUInt32LE(v0, v1, vr);
+    hr = pInst->readUInt32LE(v0, vr);
 
     METHOD_RETURN();
 }
@@ -869,12 +887,11 @@ inline void Buffer_base::s_readUInt32BE(const v8::FunctionCallbackInfo<v8::Value
     METHOD_INSTANCE(Buffer_base);
     METHOD_ENTER();
 
-    METHOD_OVER(2, 0);
+    METHOD_OVER(1, 0);
 
     OPT_ARG(int32_t, 0, 0);
-    OPT_ARG(bool, 1, false);
 
-    hr = pInst->readUInt32BE(v0, v1, vr);
+    hr = pInst->readUInt32BE(v0, vr);
 
     METHOD_RETURN();
 }
@@ -887,13 +904,12 @@ inline void Buffer_base::s_readUIntLE(const v8::FunctionCallbackInfo<v8::Value>&
     METHOD_INSTANCE(Buffer_base);
     METHOD_ENTER();
 
-    METHOD_OVER(3, 0);
+    METHOD_OVER(2, 0);
 
     OPT_ARG(int32_t, 0, 0);
     OPT_ARG(int32_t, 1, 8);
-    OPT_ARG(bool, 2, false);
 
-    hr = pInst->readUIntLE(v0, v1, v2, vr);
+    hr = pInst->readUIntLE(v0, v1, vr);
 
     METHOD_RETURN();
 }
@@ -906,13 +922,12 @@ inline void Buffer_base::s_readUIntBE(const v8::FunctionCallbackInfo<v8::Value>&
     METHOD_INSTANCE(Buffer_base);
     METHOD_ENTER();
 
-    METHOD_OVER(3, 0);
+    METHOD_OVER(2, 0);
 
     OPT_ARG(int32_t, 0, 0);
     OPT_ARG(int32_t, 1, 8);
-    OPT_ARG(bool, 2, false);
 
-    hr = pInst->readUIntBE(v0, v1, v2, vr);
+    hr = pInst->readUIntBE(v0, v1, vr);
 
     METHOD_RETURN();
 }
@@ -925,12 +940,11 @@ inline void Buffer_base::s_readInt64LE(const v8::FunctionCallbackInfo<v8::Value>
     METHOD_INSTANCE(Buffer_base);
     METHOD_ENTER();
 
-    METHOD_OVER(2, 0);
+    METHOD_OVER(1, 0);
 
     OPT_ARG(int32_t, 0, 0);
-    OPT_ARG(bool, 1, false);
 
-    hr = pInst->readInt64LE(v0, v1, vr);
+    hr = pInst->readInt64LE(v0, vr);
 
     METHOD_RETURN();
 }
@@ -943,12 +957,11 @@ inline void Buffer_base::s_readInt64BE(const v8::FunctionCallbackInfo<v8::Value>
     METHOD_INSTANCE(Buffer_base);
     METHOD_ENTER();
 
-    METHOD_OVER(2, 0);
+    METHOD_OVER(1, 0);
 
     OPT_ARG(int32_t, 0, 0);
-    OPT_ARG(bool, 1, false);
 
-    hr = pInst->readInt64BE(v0, v1, vr);
+    hr = pInst->readInt64BE(v0, vr);
 
     METHOD_RETURN();
 }
@@ -961,12 +974,11 @@ inline void Buffer_base::s_readInt8(const v8::FunctionCallbackInfo<v8::Value>& a
     METHOD_INSTANCE(Buffer_base);
     METHOD_ENTER();
 
-    METHOD_OVER(2, 0);
+    METHOD_OVER(1, 0);
 
     OPT_ARG(int32_t, 0, 0);
-    OPT_ARG(bool, 1, false);
 
-    hr = pInst->readInt8(v0, v1, vr);
+    hr = pInst->readInt8(v0, vr);
 
     METHOD_RETURN();
 }
@@ -979,12 +991,11 @@ inline void Buffer_base::s_readInt16LE(const v8::FunctionCallbackInfo<v8::Value>
     METHOD_INSTANCE(Buffer_base);
     METHOD_ENTER();
 
-    METHOD_OVER(2, 0);
+    METHOD_OVER(1, 0);
 
     OPT_ARG(int32_t, 0, 0);
-    OPT_ARG(bool, 1, false);
 
-    hr = pInst->readInt16LE(v0, v1, vr);
+    hr = pInst->readInt16LE(v0, vr);
 
     METHOD_RETURN();
 }
@@ -997,12 +1008,11 @@ inline void Buffer_base::s_readInt16BE(const v8::FunctionCallbackInfo<v8::Value>
     METHOD_INSTANCE(Buffer_base);
     METHOD_ENTER();
 
-    METHOD_OVER(2, 0);
+    METHOD_OVER(1, 0);
 
     OPT_ARG(int32_t, 0, 0);
-    OPT_ARG(bool, 1, false);
 
-    hr = pInst->readInt16BE(v0, v1, vr);
+    hr = pInst->readInt16BE(v0, vr);
 
     METHOD_RETURN();
 }
@@ -1015,12 +1025,11 @@ inline void Buffer_base::s_readInt32LE(const v8::FunctionCallbackInfo<v8::Value>
     METHOD_INSTANCE(Buffer_base);
     METHOD_ENTER();
 
-    METHOD_OVER(2, 0);
+    METHOD_OVER(1, 0);
 
     OPT_ARG(int32_t, 0, 0);
-    OPT_ARG(bool, 1, false);
 
-    hr = pInst->readInt32LE(v0, v1, vr);
+    hr = pInst->readInt32LE(v0, vr);
 
     METHOD_RETURN();
 }
@@ -1033,12 +1042,11 @@ inline void Buffer_base::s_readInt32BE(const v8::FunctionCallbackInfo<v8::Value>
     METHOD_INSTANCE(Buffer_base);
     METHOD_ENTER();
 
-    METHOD_OVER(2, 0);
+    METHOD_OVER(1, 0);
 
     OPT_ARG(int32_t, 0, 0);
-    OPT_ARG(bool, 1, false);
 
-    hr = pInst->readInt32BE(v0, v1, vr);
+    hr = pInst->readInt32BE(v0, vr);
 
     METHOD_RETURN();
 }
@@ -1051,13 +1059,12 @@ inline void Buffer_base::s_readIntLE(const v8::FunctionCallbackInfo<v8::Value>& 
     METHOD_INSTANCE(Buffer_base);
     METHOD_ENTER();
 
-    METHOD_OVER(3, 0);
+    METHOD_OVER(2, 0);
 
     OPT_ARG(int32_t, 0, 0);
     OPT_ARG(int32_t, 1, 8);
-    OPT_ARG(bool, 2, false);
 
-    hr = pInst->readIntLE(v0, v1, v2, vr);
+    hr = pInst->readIntLE(v0, v1, vr);
 
     METHOD_RETURN();
 }
@@ -1070,13 +1077,12 @@ inline void Buffer_base::s_readIntBE(const v8::FunctionCallbackInfo<v8::Value>& 
     METHOD_INSTANCE(Buffer_base);
     METHOD_ENTER();
 
-    METHOD_OVER(3, 0);
+    METHOD_OVER(2, 0);
 
     OPT_ARG(int32_t, 0, 0);
     OPT_ARG(int32_t, 1, 8);
-    OPT_ARG(bool, 2, false);
 
-    hr = pInst->readIntBE(v0, v1, v2, vr);
+    hr = pInst->readIntBE(v0, v1, vr);
 
     METHOD_RETURN();
 }
@@ -1089,13 +1095,12 @@ inline void Buffer_base::s_writeInt64LE(const v8::FunctionCallbackInfo<v8::Value
     METHOD_INSTANCE(Buffer_base);
     METHOD_ENTER();
 
-    METHOD_OVER(3, 1);
+    METHOD_OVER(2, 1);
 
     ARG(int64_t, 0);
     OPT_ARG(int32_t, 1, 0);
-    OPT_ARG(bool, 2, false);
 
-    hr = pInst->writeInt64LE(v0, v1, v2, vr);
+    hr = pInst->writeInt64LE(v0, v1, vr);
 
     METHOD_RETURN();
 }
@@ -1108,13 +1113,12 @@ inline void Buffer_base::s_writeInt64BE(const v8::FunctionCallbackInfo<v8::Value
     METHOD_INSTANCE(Buffer_base);
     METHOD_ENTER();
 
-    METHOD_OVER(3, 1);
+    METHOD_OVER(2, 1);
 
     ARG(int64_t, 0);
     OPT_ARG(int32_t, 1, 0);
-    OPT_ARG(bool, 2, false);
 
-    hr = pInst->writeInt64BE(v0, v1, v2, vr);
+    hr = pInst->writeInt64BE(v0, v1, vr);
 
     METHOD_RETURN();
 }
@@ -1127,12 +1131,11 @@ inline void Buffer_base::s_readFloatLE(const v8::FunctionCallbackInfo<v8::Value>
     METHOD_INSTANCE(Buffer_base);
     METHOD_ENTER();
 
-    METHOD_OVER(2, 0);
+    METHOD_OVER(1, 0);
 
     OPT_ARG(int32_t, 0, 0);
-    OPT_ARG(bool, 1, false);
 
-    hr = pInst->readFloatLE(v0, v1, vr);
+    hr = pInst->readFloatLE(v0, vr);
 
     METHOD_RETURN();
 }
@@ -1145,12 +1148,11 @@ inline void Buffer_base::s_readFloatBE(const v8::FunctionCallbackInfo<v8::Value>
     METHOD_INSTANCE(Buffer_base);
     METHOD_ENTER();
 
-    METHOD_OVER(2, 0);
+    METHOD_OVER(1, 0);
 
     OPT_ARG(int32_t, 0, 0);
-    OPT_ARG(bool, 1, false);
 
-    hr = pInst->readFloatBE(v0, v1, vr);
+    hr = pInst->readFloatBE(v0, vr);
 
     METHOD_RETURN();
 }
@@ -1163,12 +1165,11 @@ inline void Buffer_base::s_readDoubleLE(const v8::FunctionCallbackInfo<v8::Value
     METHOD_INSTANCE(Buffer_base);
     METHOD_ENTER();
 
-    METHOD_OVER(2, 0);
+    METHOD_OVER(1, 0);
 
     OPT_ARG(int32_t, 0, 0);
-    OPT_ARG(bool, 1, false);
 
-    hr = pInst->readDoubleLE(v0, v1, vr);
+    hr = pInst->readDoubleLE(v0, vr);
 
     METHOD_RETURN();
 }
@@ -1181,12 +1182,11 @@ inline void Buffer_base::s_readDoubleBE(const v8::FunctionCallbackInfo<v8::Value
     METHOD_INSTANCE(Buffer_base);
     METHOD_ENTER();
 
-    METHOD_OVER(2, 0);
+    METHOD_OVER(1, 0);
 
     OPT_ARG(int32_t, 0, 0);
-    OPT_ARG(bool, 1, false);
 
-    hr = pInst->readDoubleBE(v0, v1, vr);
+    hr = pInst->readDoubleBE(v0, vr);
 
     METHOD_RETURN();
 }
@@ -1199,13 +1199,12 @@ inline void Buffer_base::s_writeUInt8(const v8::FunctionCallbackInfo<v8::Value>&
     METHOD_INSTANCE(Buffer_base);
     METHOD_ENTER();
 
-    METHOD_OVER(3, 1);
+    METHOD_OVER(2, 1);
 
     ARG(int32_t, 0);
     OPT_ARG(int32_t, 1, 0);
-    OPT_ARG(bool, 2, false);
 
-    hr = pInst->writeUInt8(v0, v1, v2, vr);
+    hr = pInst->writeUInt8(v0, v1, vr);
 
     METHOD_RETURN();
 }
@@ -1218,13 +1217,12 @@ inline void Buffer_base::s_writeUInt16LE(const v8::FunctionCallbackInfo<v8::Valu
     METHOD_INSTANCE(Buffer_base);
     METHOD_ENTER();
 
-    METHOD_OVER(3, 1);
+    METHOD_OVER(2, 1);
 
     ARG(int32_t, 0);
     OPT_ARG(int32_t, 1, 0);
-    OPT_ARG(bool, 2, false);
 
-    hr = pInst->writeUInt16LE(v0, v1, v2, vr);
+    hr = pInst->writeUInt16LE(v0, v1, vr);
 
     METHOD_RETURN();
 }
@@ -1237,13 +1235,12 @@ inline void Buffer_base::s_writeUInt16BE(const v8::FunctionCallbackInfo<v8::Valu
     METHOD_INSTANCE(Buffer_base);
     METHOD_ENTER();
 
-    METHOD_OVER(3, 1);
+    METHOD_OVER(2, 1);
 
     ARG(int32_t, 0);
     OPT_ARG(int32_t, 1, 0);
-    OPT_ARG(bool, 2, false);
 
-    hr = pInst->writeUInt16BE(v0, v1, v2, vr);
+    hr = pInst->writeUInt16BE(v0, v1, vr);
 
     METHOD_RETURN();
 }
@@ -1256,13 +1253,12 @@ inline void Buffer_base::s_writeUInt32LE(const v8::FunctionCallbackInfo<v8::Valu
     METHOD_INSTANCE(Buffer_base);
     METHOD_ENTER();
 
-    METHOD_OVER(3, 1);
+    METHOD_OVER(2, 1);
 
     ARG(int64_t, 0);
     OPT_ARG(int32_t, 1, 0);
-    OPT_ARG(bool, 2, false);
 
-    hr = pInst->writeUInt32LE(v0, v1, v2, vr);
+    hr = pInst->writeUInt32LE(v0, v1, vr);
 
     METHOD_RETURN();
 }
@@ -1275,13 +1271,12 @@ inline void Buffer_base::s_writeUInt32BE(const v8::FunctionCallbackInfo<v8::Valu
     METHOD_INSTANCE(Buffer_base);
     METHOD_ENTER();
 
-    METHOD_OVER(3, 1);
+    METHOD_OVER(2, 1);
 
     ARG(int64_t, 0);
     OPT_ARG(int32_t, 1, 0);
-    OPT_ARG(bool, 2, false);
 
-    hr = pInst->writeUInt32BE(v0, v1, v2, vr);
+    hr = pInst->writeUInt32BE(v0, v1, vr);
 
     METHOD_RETURN();
 }
@@ -1294,14 +1289,13 @@ inline void Buffer_base::s_writeUIntLE(const v8::FunctionCallbackInfo<v8::Value>
     METHOD_INSTANCE(Buffer_base);
     METHOD_ENTER();
 
-    METHOD_OVER(4, 1);
+    METHOD_OVER(3, 1);
 
     ARG(int64_t, 0);
     OPT_ARG(int32_t, 1, 0);
     OPT_ARG(int32_t, 2, 8);
-    OPT_ARG(bool, 3, false);
 
-    hr = pInst->writeUIntLE(v0, v1, v2, v3, vr);
+    hr = pInst->writeUIntLE(v0, v1, v2, vr);
 
     METHOD_RETURN();
 }
@@ -1314,14 +1308,13 @@ inline void Buffer_base::s_writeUIntBE(const v8::FunctionCallbackInfo<v8::Value>
     METHOD_INSTANCE(Buffer_base);
     METHOD_ENTER();
 
-    METHOD_OVER(4, 1);
+    METHOD_OVER(3, 1);
 
     ARG(int64_t, 0);
     OPT_ARG(int32_t, 1, 0);
     OPT_ARG(int32_t, 2, 8);
-    OPT_ARG(bool, 3, false);
 
-    hr = pInst->writeUIntBE(v0, v1, v2, v3, vr);
+    hr = pInst->writeUIntBE(v0, v1, v2, vr);
 
     METHOD_RETURN();
 }
@@ -1334,13 +1327,12 @@ inline void Buffer_base::s_writeInt8(const v8::FunctionCallbackInfo<v8::Value>& 
     METHOD_INSTANCE(Buffer_base);
     METHOD_ENTER();
 
-    METHOD_OVER(3, 1);
+    METHOD_OVER(2, 1);
 
     ARG(int32_t, 0);
     OPT_ARG(int32_t, 1, 0);
-    OPT_ARG(bool, 2, false);
 
-    hr = pInst->writeInt8(v0, v1, v2, vr);
+    hr = pInst->writeInt8(v0, v1, vr);
 
     METHOD_RETURN();
 }
@@ -1353,13 +1345,12 @@ inline void Buffer_base::s_writeInt16LE(const v8::FunctionCallbackInfo<v8::Value
     METHOD_INSTANCE(Buffer_base);
     METHOD_ENTER();
 
-    METHOD_OVER(3, 1);
+    METHOD_OVER(2, 1);
 
     ARG(int32_t, 0);
     OPT_ARG(int32_t, 1, 0);
-    OPT_ARG(bool, 2, false);
 
-    hr = pInst->writeInt16LE(v0, v1, v2, vr);
+    hr = pInst->writeInt16LE(v0, v1, vr);
 
     METHOD_RETURN();
 }
@@ -1372,13 +1363,12 @@ inline void Buffer_base::s_writeInt16BE(const v8::FunctionCallbackInfo<v8::Value
     METHOD_INSTANCE(Buffer_base);
     METHOD_ENTER();
 
-    METHOD_OVER(3, 1);
+    METHOD_OVER(2, 1);
 
     ARG(int32_t, 0);
     OPT_ARG(int32_t, 1, 0);
-    OPT_ARG(bool, 2, false);
 
-    hr = pInst->writeInt16BE(v0, v1, v2, vr);
+    hr = pInst->writeInt16BE(v0, v1, vr);
 
     METHOD_RETURN();
 }
@@ -1391,13 +1381,12 @@ inline void Buffer_base::s_writeInt32LE(const v8::FunctionCallbackInfo<v8::Value
     METHOD_INSTANCE(Buffer_base);
     METHOD_ENTER();
 
-    METHOD_OVER(3, 1);
+    METHOD_OVER(2, 1);
 
     ARG(int32_t, 0);
     OPT_ARG(int32_t, 1, 0);
-    OPT_ARG(bool, 2, false);
 
-    hr = pInst->writeInt32LE(v0, v1, v2, vr);
+    hr = pInst->writeInt32LE(v0, v1, vr);
 
     METHOD_RETURN();
 }
@@ -1410,13 +1399,12 @@ inline void Buffer_base::s_writeInt32BE(const v8::FunctionCallbackInfo<v8::Value
     METHOD_INSTANCE(Buffer_base);
     METHOD_ENTER();
 
-    METHOD_OVER(3, 1);
+    METHOD_OVER(2, 1);
 
     ARG(int32_t, 0);
     OPT_ARG(int32_t, 1, 0);
-    OPT_ARG(bool, 2, false);
 
-    hr = pInst->writeInt32BE(v0, v1, v2, vr);
+    hr = pInst->writeInt32BE(v0, v1, vr);
 
     METHOD_RETURN();
 }
@@ -1429,14 +1417,13 @@ inline void Buffer_base::s_writeIntLE(const v8::FunctionCallbackInfo<v8::Value>&
     METHOD_INSTANCE(Buffer_base);
     METHOD_ENTER();
 
-    METHOD_OVER(4, 1);
+    METHOD_OVER(3, 1);
 
     ARG(int64_t, 0);
     OPT_ARG(int32_t, 1, 0);
     OPT_ARG(int32_t, 2, 8);
-    OPT_ARG(bool, 3, false);
 
-    hr = pInst->writeIntLE(v0, v1, v2, v3, vr);
+    hr = pInst->writeIntLE(v0, v1, v2, vr);
 
     METHOD_RETURN();
 }
@@ -1449,14 +1436,13 @@ inline void Buffer_base::s_writeIntBE(const v8::FunctionCallbackInfo<v8::Value>&
     METHOD_INSTANCE(Buffer_base);
     METHOD_ENTER();
 
-    METHOD_OVER(4, 1);
+    METHOD_OVER(3, 1);
 
     ARG(int64_t, 0);
     OPT_ARG(int32_t, 1, 0);
     OPT_ARG(int32_t, 2, 8);
-    OPT_ARG(bool, 3, false);
 
-    hr = pInst->writeIntBE(v0, v1, v2, v3, vr);
+    hr = pInst->writeIntBE(v0, v1, v2, vr);
 
     METHOD_RETURN();
 }
@@ -1469,13 +1455,12 @@ inline void Buffer_base::s_writeFloatLE(const v8::FunctionCallbackInfo<v8::Value
     METHOD_INSTANCE(Buffer_base);
     METHOD_ENTER();
 
-    METHOD_OVER(3, 2);
+    METHOD_OVER(2, 2);
 
     ARG(double, 0);
     ARG(int32_t, 1);
-    OPT_ARG(bool, 2, false);
 
-    hr = pInst->writeFloatLE(v0, v1, v2, vr);
+    hr = pInst->writeFloatLE(v0, v1, vr);
 
     METHOD_RETURN();
 }
@@ -1488,13 +1473,12 @@ inline void Buffer_base::s_writeFloatBE(const v8::FunctionCallbackInfo<v8::Value
     METHOD_INSTANCE(Buffer_base);
     METHOD_ENTER();
 
-    METHOD_OVER(3, 2);
+    METHOD_OVER(2, 2);
 
     ARG(double, 0);
     ARG(int32_t, 1);
-    OPT_ARG(bool, 2, false);
 
-    hr = pInst->writeFloatBE(v0, v1, v2, vr);
+    hr = pInst->writeFloatBE(v0, v1, vr);
 
     METHOD_RETURN();
 }
@@ -1507,13 +1491,12 @@ inline void Buffer_base::s_writeDoubleLE(const v8::FunctionCallbackInfo<v8::Valu
     METHOD_INSTANCE(Buffer_base);
     METHOD_ENTER();
 
-    METHOD_OVER(3, 2);
+    METHOD_OVER(2, 2);
 
     ARG(double, 0);
     ARG(int32_t, 1);
-    OPT_ARG(bool, 2, false);
 
-    hr = pInst->writeDoubleLE(v0, v1, v2, vr);
+    hr = pInst->writeDoubleLE(v0, v1, vr);
 
     METHOD_RETURN();
 }
@@ -1526,13 +1509,12 @@ inline void Buffer_base::s_writeDoubleBE(const v8::FunctionCallbackInfo<v8::Valu
     METHOD_INSTANCE(Buffer_base);
     METHOD_ENTER();
 
-    METHOD_OVER(3, 2);
+    METHOD_OVER(2, 2);
 
     ARG(double, 0);
     ARG(int32_t, 1);
-    OPT_ARG(bool, 2, false);
 
-    hr = pInst->writeDoubleBE(v0, v1, v2, vr);
+    hr = pInst->writeDoubleBE(v0, v1, vr);
 
     METHOD_RETURN();
 }
@@ -1642,7 +1624,7 @@ inline void Buffer_base::s_base64(const v8::FunctionCallbackInfo<v8::Value>& arg
 
 inline void Buffer_base::s_keys(const v8::FunctionCallbackInfo<v8::Value>& args)
 {
-    v8::Local<v8::Object> vr;
+    obj_ptr<Iterator_base> vr;
 
     METHOD_NAME("Buffer.keys");
     METHOD_INSTANCE(Buffer_base);
@@ -1657,7 +1639,7 @@ inline void Buffer_base::s_keys(const v8::FunctionCallbackInfo<v8::Value>& args)
 
 inline void Buffer_base::s_values(const v8::FunctionCallbackInfo<v8::Value>& args)
 {
-    v8::Local<v8::Object> vr;
+    obj_ptr<Iterator_base> vr;
 
     METHOD_NAME("Buffer.values");
     METHOD_INSTANCE(Buffer_base);
@@ -1672,7 +1654,7 @@ inline void Buffer_base::s_values(const v8::FunctionCallbackInfo<v8::Value>& arg
 
 inline void Buffer_base::s_entries(const v8::FunctionCallbackInfo<v8::Value>& args)
 {
-    v8::Local<v8::Object> vr;
+    obj_ptr<Iterator_base> vr;
 
     METHOD_NAME("Buffer.entries");
     METHOD_INSTANCE(Buffer_base);

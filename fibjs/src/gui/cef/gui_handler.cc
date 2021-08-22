@@ -115,11 +115,11 @@ void GuiHandler::OnBeforeClose(CefRefPtr<CefBrowser> browser)
 
         if ((*bit)->m_bHeadless) {
             (*bit)->_emit("closed");
-            (*bit)->holder()->Unref();
+            (*bit)->isolate_unref();
         } else {
 #ifdef Linux
             (*bit)->_emit("closed");
-            (*bit)->holder()->Unref();
+            (*bit)->isolate_unref();
 #endif
         }
         browser_list_.erase(bit);
@@ -132,12 +132,12 @@ bool GuiHandler::OnConsoleMessage(CefRefPtr<CefBrowser> browser,
     const CefString& source, int line)
 {
     static int32_t console_level[] = {
-        console_base::_NOTSET,
-        console_base::_DEBUG,
-        console_base::_INFO,
-        console_base::_WARN,
-        console_base::_ERROR,
-        console_base::_FATAL
+        console_base::C_NOTSET,
+        console_base::C_DEBUG,
+        console_base::C_INFO,
+        console_base::C_WARN,
+        console_base::C_ERROR,
+        console_base::C_FATAL
     };
 
     BrowserList::iterator bit = fromBrowser(browser);

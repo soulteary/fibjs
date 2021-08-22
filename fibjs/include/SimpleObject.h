@@ -46,7 +46,7 @@ public:
 
         for (i = 0; i < len; i++) {
             JSValue k = ks->Get(i);
-            add(ToCString(v8::String::Utf8Value(isolate->m_isolate, k)), m->Get(k));
+            add(isolate->toString(k), m->Get(k));
         }
 
         return 0;
@@ -115,10 +115,9 @@ public:
         m_array.push_back(value);
     }
 
-    result_t get_length(int32_t& retVal)
+    int32_t length()
     {
-        retVal = (int32_t)m_array.size();
-        return 0;
+        return (int32_t)m_array.size();
     }
 
     result_t _indexed_getter(int32_t idx, Variant& retVal)

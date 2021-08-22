@@ -51,7 +51,7 @@ result_t util_base::has(v8::Local<v8::Value> v, exlib::string key, bool& retVal)
         return CHECK_ERROR(CALL_E_INVALIDARG);
 
     Isolate* isolate = Isolate::current();
-    v8::Local<v8::Object> obj = isolate->toLocalObject(v);
+    v8::Local<v8::Object> obj = v8::Local<v8::Object>::Cast(v);
     retVal = obj->HasOwnProperty(obj->CreationContext(), isolate->NewString(key)).ToChecked();
     return 0;
 }
@@ -61,7 +61,7 @@ result_t util_base::keys(v8::Local<v8::Value> v, v8::Local<v8::Array>& retVal)
     if (v->IsObject()) {
         Isolate* isolate = Isolate::current();
 
-        v8::Local<v8::Object> obj = isolate->toLocalObject(v);
+        v8::Local<v8::Object> obj = v8::Local<v8::Object>::Cast(v);
 
         retVal = JSArray(obj->GetPropertyNames());
         if (obj->IsArray()) {
@@ -83,7 +83,7 @@ result_t util_base::values(v8::Local<v8::Value> v, v8::Local<v8::Array>& retVal)
 {
     Isolate* isolate = Isolate::current();
     if (v->IsObject()) {
-        v8::Local<v8::Object> obj = isolate->toLocalObject(v);
+        v8::Local<v8::Object> obj = v8::Local<v8::Object>::Cast(v);
         JSArray keys = obj->GetPropertyNames();
         v8::Local<v8::Array> arr = v8::Array::New(isolate->m_isolate);
 
@@ -142,11 +142,15 @@ result_t util_base::deepFreeze(v8::Local<v8::Value> v)
     v8::Local<v8::Object> obj = v8::Local<v8::Object>::Cast(v);
 
     if (!isFrozen(obj)) {
-        obj->SetIntegrityLevel(obj->CreationContext(), v8::IntegrityLevel::kFrozen).ToChecked();
-        JSArray names = obj->GetPropertyNames(obj->CreationContext());
+        if (obj->SetIntegrityLevel(obj->CreationContext(), v8::IntegrityLevel::kFrozen).IsNothing())
+            return CALL_E_JAVASCRIPT;
 
-        for (int32_t i = 0; i < (int32_t)names->Length(); i++)
-            deepFreeze(JSValue(obj->Get(JSValue(names->Get(i)))));
+        JSArray names = obj->GetPropertyNames(obj->CreationContext());
+        for (int32_t i = 0; i < (int32_t)names->Length(); i++) {
+            result_t hr = deepFreeze(JSValue(obj->Get(JSValue(names->Get(i)))));
+            if (hr < 0)
+                return hr;
+        }
     }
 
     return 0;
@@ -166,7 +170,7 @@ result_t util_base::extend(v8::Local<v8::Value> v, OptArgs objs,
     Isolate* isolate = Isolate::current();
     v8::Local<v8::Context> context = Isolate::current()->m_isolate->GetCurrentContext();
 
-    v8::Local<v8::Object> obj = isolate->toLocalObject(v);
+    v8::Local<v8::Object> obj = v8::Local<v8::Object>::Cast(v);
     int32_t argc = objs.Length();
     int32_t i, j;
 
@@ -179,7 +183,7 @@ result_t util_base::extend(v8::Local<v8::Value> v, OptArgs objs,
         if (!val->IsObject())
             return CHECK_ERROR(CALL_E_INVALIDARG);
 
-        v8::Local<v8::Object> obj1 = isolate->toLocalObject(val);
+        v8::Local<v8::Object> obj1 = v8::Local<v8::Object>::Cast(val);
         JSArray keys = obj1->GetPropertyNames();
         int32_t len = keys->Length();
 
@@ -212,7 +216,7 @@ result_t util_base::pick(v8::Local<v8::Value> v, OptArgs objs,
     if (!v->IsObject())
         return CHECK_ERROR(CALL_E_INVALIDARG);
 
-    v8::Local<v8::Object> obj = isolate->toLocalObject(v);
+    v8::Local<v8::Object> obj = v8::Local<v8::Object>::Cast(v);
     v8::Local<v8::Object> obj1 = v8::Object::New(isolate->m_isolate);
 
     int32_t argc = objs.Length();
@@ -255,7 +259,7 @@ result_t util_base::omit(v8::Local<v8::Value> v, OptArgs keys,
     if (!v->IsObject())
         return CHECK_ERROR(CALL_E_INVALIDARG);
 
-    v8::Local<v8::Object> obj = isolate->toLocalObject(v);
+    v8::Local<v8::Object> obj = v8::Local<v8::Object>::Cast(v);
 
     std::map<exlib::string, bool> _map;
     int32_t argc = keys.Length();
@@ -293,7 +297,7 @@ result_t util_base::omit(v8::Local<v8::Value> v, OptArgs keys,
     for (i = 0; i < len; i++) {
         JSValue key = keys1->Get(i);
 
-        if (_map.find(ToCString(v8::String::Utf8Value(isolate->m_isolate, key))) == _map.end()) {
+        if (_map.find(isolate->toString(key)) == _map.end()) {
             JSValue value = obj->Get(key);
             obj1->Set(key, value);
         }
@@ -344,7 +348,7 @@ result_t util_base::intersection(OptArgs arrs,
             for (j = 0; left > 0 && j < len; j++)
                 if (!erase[j].IsEmpty()) {
                     for (k = 0; k < len1; k++)
-                        if (isolate->isEquals(erase[j], JSValue(other->Get(k))))
+                        if (erase[j]->StrictEquals(JSValue(other->Get(k))))
                             break;
 
                     if (k == len1) {
@@ -360,7 +364,7 @@ result_t util_base::intersection(OptArgs arrs,
             for (i = 0; i < len; i++)
                 if (!erase[i].IsEmpty()) {
                     for (j = 0; j < i; j++)
-                        if (!erase[j].IsEmpty() && isolate->isEquals(erase[i], erase[j]))
+                        if (!erase[j].IsEmpty() && erase[i]->StrictEquals(erase[j]))
                             break;
 
                     if (j == i)
@@ -558,11 +562,13 @@ result_t util_base::_union(OptArgs arrs,
     return 0;
 }
 
-result_t util_base::flatten(v8::Local<v8::Value> list, bool shallow,
-    v8::Local<v8::Array>& retVal)
+static result_t util_flatten(v8::Local<v8::Value> list, bool shallow,
+    v8::Local<v8::Array>& retVal, QuickArray<JSValue>& flatten_list)
 {
     if (!list->IsObject())
         return CHECK_ERROR(CALL_E_INVALIDARG);
+
+    flatten_list.append(list);
 
     bool bNext = true;
 
@@ -580,7 +586,7 @@ result_t util_base::flatten(v8::Local<v8::Value> list, bool shallow,
 
     int32_t len = isolate->toInt32Value(v);
     int32_t cnt = retVal->Length();
-    int32_t i;
+    int32_t i, j;
 
     for (i = 0; i < len; i++) {
         v = o->Get(i);
@@ -590,7 +596,14 @@ result_t util_base::flatten(v8::Local<v8::Value> list, bool shallow,
             if (IsEmpty(v))
                 retVal->Set(cnt++, JSValue(o->Get(i)));
             else {
-                flatten(o1, shallow, retVal);
+                for (j = 0; j < (int32_t)flatten_list.size(); j++)
+                    if (flatten_list[j]->StrictEquals(o1))
+                        return CHECK_ERROR(Runtime::setError("util: circular reference object."));
+
+                result_t hr = util_flatten(o1, shallow, retVal, flatten_list);
+                if (hr < 0)
+                    return hr;
+
                 cnt = retVal->Length();
             }
         } else
@@ -598,6 +611,13 @@ result_t util_base::flatten(v8::Local<v8::Value> list, bool shallow,
     }
 
     return 0;
+}
+
+result_t util_base::flatten(v8::Local<v8::Value> list, bool shallow,
+    v8::Local<v8::Array>& retVal)
+{
+    QuickArray<JSValue> flatten_list;
+    return util_flatten(list, shallow, retVal, flatten_list);
 }
 
 result_t util_base::without(v8::Local<v8::Value> arr, OptArgs els,
@@ -900,5 +920,4 @@ result_t util_base::parseArgs(exlib::string command, obj_ptr<NArray>& retVal)
     retVal = arr;
     return 0;
 }
-
 }

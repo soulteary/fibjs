@@ -200,12 +200,12 @@ result_t SslSocket::read(int32_t bytes, obj_ptr<Buffer_base>& retVal,
     public:
         virtual int32_t process()
         {
-            int32_t ret = mbedtls_ssl_read(&m_pThis->m_ssl, (unsigned char*)&m_buf[0], m_bytes);
+            int32_t ret = mbedtls_ssl_read(&m_pThis->m_ssl, (unsigned char*)m_buf.c_buffer(), m_bytes);
             if (ret > 0) {
                 m_buf.resize(ret);
                 m_retVal = new Buffer(m_buf);
                 if (g_ssldump)
-                    outLog(console_base::_NOTICE, clean_string(m_buf));
+                    outLog(console_base::C_NOTICE, clean_string(m_buf));
                 return 0;
             }
 
@@ -245,7 +245,7 @@ result_t SslSocket::write(Buffer_base* data, AsyncEvent* ac)
         {
             data->toString(m_buf);
             if (g_ssldump)
-                outLog(console_base::_WARN, clean_string(m_buf));
+                outLog(console_base::C_WARN, clean_string(m_buf));
             m_pos = 0;
         }
 
@@ -337,7 +337,7 @@ result_t SslSocket::get_verification(int32_t& retVal)
 
 result_t SslSocket::set_verification(int32_t newVal)
 {
-    if (newVal < ssl_base::_VERIFY_NONE || newVal > ssl_base::_VERIFY_REQUIRED)
+    if (newVal < ssl_base::C_VERIFY_NONE || newVal > ssl_base::C_VERIFY_REQUIRED)
         return CHECK_ERROR(CALL_E_INVALIDARG);
 
     mbedtls_ssl_conf_authmode(&m_ssl_conf, newVal);
@@ -430,8 +430,9 @@ result_t SslSocket::connect(Stream_base* s, exlib::string server_name,
     int32_t ret;
     m_s = s;
 
+    X509Cert_base* ca = ac->isolate()->m_ca;
     if (!m_ca)
-        m_ca = g_ssl.ca();
+        m_ca = (X509Cert*)ca;
 
     mbedtls_ssl_conf_ca_chain(&m_ssl_conf, &m_ca->m_crt, NULL);
 

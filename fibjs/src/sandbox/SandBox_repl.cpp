@@ -21,21 +21,19 @@ void asyncLog(int32_t priority, exlib::string msg);
 
 void output(int32_t priority, exlib::string msg)
 {
-    if (priority == console_base::_ERROR)
+    if (priority == console_base::C_ERROR)
         msg = logger::error() + msg + COLOR_RESET;
 
-    if (priority != console_base::_PRINT)
+    if (priority != console_base::C_PRINT)
         msg += '\n';
 
-    asyncLog(console_base::_PRINT, msg);
+    asyncLog(console_base::C_PRINT, msg);
 }
 
 bool repl_command(exlib::string& line)
 {
     _parser p(line);
     exlib::string cmd_word;
-    result_t hr;
-    int32_t i;
 
     p.skipSpace();
     p.getWord(cmd_word);
@@ -47,7 +45,7 @@ bool repl_command(exlib::string& line)
 
         Isolate* isolate = Isolate::current();
 
-        output(console_base::_INFO, help_str);
+        output(console_base::C_INFO, help_str);
         return true;
     }
 
@@ -64,7 +62,7 @@ bool repl_command(exlib::string& line)
 
     Isolate* isolate = Isolate::current();
 
-    output(console_base::_ERROR, cmd_word + ": command not found.");
+    output(console_base::C_ERROR, cmd_word + ": command not found.");
     return true;
 }
 
@@ -90,8 +88,8 @@ result_t SandBox::Context::repl()
 
     str_ver += fibjs_version;
     str_ver += '.';
-    output(console_base::_INFO, str_ver);
-    output(console_base::_INFO, "Type \".help\" for more information.");
+    output(console_base::C_INFO, str_ver);
+    output(console_base::C_INFO, "Type \".help\" for more information.");
 
     while (true) {
         if (!v.IsEmpty() && !v->IsUndefined())
@@ -123,16 +121,9 @@ result_t SandBox::Context::repl()
             v8::ScriptOrigin origin(strFname);
             v8::Local<v8::Context> context = isolate->m_isolate->GetCurrentContext();
             v8::MaybeLocal<v8::Script> lscript = v8::Script::Compile(context, isolate->NewString(buf), &origin);
-            if (lscript.IsEmpty()) {
-                ReportException(try_catch, 0, true);
-                continue;
-            }
 
-            script = lscript.ToLocalChecked();
-
-            if (script.IsEmpty()) {
-                v8::String::Utf8Value exception(isolate->m_isolate, try_catch.Exception());
-                if (*exception && qstrcmp(ToCString(exception), "SyntaxError: Unexpected end of input")) {
+            if (lscript.IsEmpty() || (script = lscript.ToLocalChecked()).IsEmpty()) {
+                if (isolate->toString(try_catch.Exception()) != "SyntaxError: Unexpected end of input") {
                     buf.clear();
                     ReportException(try_catch, 0, true);
                 }
@@ -142,7 +133,6 @@ result_t SandBox::Context::repl()
             buf.clear();
 
             v8::MaybeLocal<v8::Value> lv = script->Run(context);
-
             if (lv.IsEmpty() || (v = lv.ToLocalChecked()).IsEmpty()) {
                 ReportException(try_catch, 0, true);
                 continue;

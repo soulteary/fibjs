@@ -184,11 +184,9 @@ int32_t checkStack(QuickArray<v8::Local<v8::Object>>& acts,
 {
     int32_t i;
 
-    Isolate* isolate = Isolate::current();
-
     for (i = 0; i < (int32_t)acts.size(); i++)
-        if (isolate->isEquals(actual, acts[i])) {
-            if (isolate->isEquals(expected, exps[i]))
+        if (actual->StrictEquals(acts[i])) {
+            if (expected->StrictEquals(exps[i]))
                 return 0;
             return -1;
         }
@@ -327,16 +325,24 @@ bool deepEquals(QuickArray<v8::Local<v8::Object>>& acts,
 result_t assert_base::equal(v8::Local<v8::Value> actual,
     v8::Local<v8::Value> expected, exlib::string msg)
 {
-    _test(Isolate::current()->isEquals(actual, expected),
-        _msg(msg, "expected ", actual, " to equal ", expected));
+    bool tst = false;
+    v8::Maybe<bool> t = actual->Equals(Isolate::current()->context(), expected);
+    if (t.IsJust())
+        tst = t.ToChecked();
+
+    _test(tst, _msg(msg, "expected ", actual, " to equal ", expected));
     return 0;
 }
 
 result_t assert_base::notEqual(v8::Local<v8::Value> actual,
     v8::Local<v8::Value> expected, exlib::string msg)
 {
-    _test(!Isolate::current()->isEquals(actual, expected),
-        _msg(msg, "expected ", actual, " to not equal ", expected));
+    bool tst = false;
+    v8::Maybe<bool> t = actual->Equals(Isolate::current()->context(), expected);
+    if (t.IsJust())
+        tst = !t.ToChecked();
+
+    _test(tst, _msg(msg, "expected ", actual, " to not equal ", expected));
     return 0;
 }
 
@@ -719,7 +725,7 @@ result_t has_prop(v8::Local<v8::Value> v, v8::Local<v8::Value> prop,
         return CHECK_ERROR(CALL_E_INVALIDARG);
 
     Isolate* isolate = Isolate::current();
-    retVal = isolate->toLocalObject(v)->Has(isolate->context(), prop).ToChecked();
+    retVal = v8::Local<v8::Object>::Cast(v)->Has(isolate->context(), prop).ToChecked();
 
     return 0;
 }
@@ -755,7 +761,7 @@ result_t deep_has_prop(v8::Local<v8::Value> object, v8::Local<v8::Value> prop,
         return CHECK_ERROR(CALL_E_INVALIDARG);
 
     Isolate* isolate = Isolate::current();
-    v8::Local<v8::Object> v = isolate->toLocalObject(object);
+    v8::Local<v8::Object> v = v8::Local<v8::Object>::Cast(object);
     v8::String::Utf8Value s(isolate->m_isolate, prop);
     const char *p, *p1;
 
@@ -768,7 +774,7 @@ result_t deep_has_prop(v8::Local<v8::Value> object, v8::Local<v8::Value> prop,
             return 0;
         }
 
-        v = isolate->toLocalObject(object);
+        v = v8::Local<v8::Object>::Cast(object);
         p = p1 + 1;
     }
 
@@ -811,11 +817,11 @@ result_t has_val(v8::Local<v8::Value> object, v8::Local<v8::Value> prop,
 
     Isolate* isolate = Isolate::current();
 
-    got = isolate->toLocalObject(object)->Get(prop);
+    got = v8::Local<v8::Object>::Cast(object)->Get(prop);
     if (got.IsEmpty())
         return CALL_E_JAVASCRIPT;
 
-    retVal = isolate->isEquals(value, got);
+    retVal = value->StrictEquals(got);
 
     return 0;
 }
@@ -861,7 +867,7 @@ result_t deep_has_val(v8::Local<v8::Value> object, v8::Local<v8::Value> prop,
         return CHECK_ERROR(CALL_E_INVALIDARG);
 
     Isolate* isolate = Isolate::current();
-    v8::Local<v8::Object> v = isolate->toLocalObject(object);
+    v8::Local<v8::Object> v = v8::Local<v8::Object>::Cast(object);
     v8::String::Utf8Value s(isolate->m_isolate, prop);
     const char *p, *p1;
 
@@ -874,14 +880,14 @@ result_t deep_has_val(v8::Local<v8::Value> object, v8::Local<v8::Value> prop,
             return 0;
         }
 
-        v = isolate->toLocalObject(object);
+        v = v8::Local<v8::Object>::Cast(object);
         p = p1 + 1;
     }
 
     got = v->Get(isolate->NewString(p));
     if (got.IsEmpty())
         return CALL_E_JAVASCRIPT;
-    retVal = isolate->isEquals(value, got);
+    retVal = value->StrictEquals(got);
 
     return 0;
 }

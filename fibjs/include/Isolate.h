@@ -14,18 +14,9 @@
 
 namespace fibjs {
 
-inline v8::Local<v8::String> NewString(v8::Isolate* isolate, const char* data, int32_t length = -1)
-{
-    exlib::wstring wstr = utf8to16String(data, length);
-
-    return v8::String::NewFromTwoByte(isolate, (const uint16_t*)wstr.c_str(),
-        v8::String::kNormalString, (int32_t)wstr.length());
-}
-
-inline v8::Local<v8::String> NewString(v8::Isolate* isolate, exlib::string str)
-{
-    return NewString(isolate, str.c_str(), (int32_t)str.length());
-}
+v8::Local<v8::String> NewString(v8::Isolate* isolate, const char* data, ssize_t length = -1);
+v8::Local<v8::String> NewString(v8::Isolate* isolate, exlib::string str);
+exlib::string ToString(v8::Isolate* isolate, v8::Local<v8::Value> v);
 
 class SandBox;
 class JSFiber;
@@ -33,6 +24,7 @@ class HttpClient;
 class LruCache;
 class Stream_base;
 class ValueHolder;
+class X509Cert_base;
 
 class Isolate : public exlib::linkitem {
 public:
@@ -90,19 +82,14 @@ public:
         return m_isolate->GetCurrentContext();
     }
 
-    v8::Local<v8::Object> toLocalObject(v8::Local<v8::Value> v)
-    {
-        return v->ToObject(this->context()).ToLocalChecked();
-    }
-
     v8::Local<v8::String> toLocalString(v8::Local<v8::Value> v)
     {
         return v->ToString(this->context()).ToLocalChecked();
     }
 
-    bool isEquals(v8::Local<v8::Value> v, v8::Local<v8::Value> tv)
+    exlib::string toString(v8::Local<v8::Value> v)
     {
-        return v->Equals(this->context(), tv).ToChecked();
+        return ToString(m_isolate, v);
     }
 
     bool toBoolean(v8::Local<v8::Value> v)
@@ -110,7 +97,7 @@ public:
         return v->BooleanValue(this->context()).ToChecked();
     }
 
-    int toInteger(v8::Local<v8::Value> v)
+    int64_t toInteger(v8::Local<v8::Value> v)
     {
         return v->IntegerValue(this->context()).ToChecked();
     }
@@ -185,6 +172,13 @@ public:
     bool m_enable_FileSystem;
     bool m_safe_buffer;
     int32_t m_max_buffer_size;
+
+    obj_ptr<X509Cert_base> m_ca;
+
+public:
+    void get_stdin(obj_ptr<Stream_base>& retVal);
+    void get_stdout(obj_ptr<Stream_base>& retVal);
+    void get_stderr(obj_ptr<Stream_base>& retVal);
 };
 
 } /* namespace fibjs */

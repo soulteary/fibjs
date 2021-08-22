@@ -17,7 +17,7 @@ void ChildProcess::on_uv_close(uv_handle_t* handle)
 {
     ChildProcess* cp = container_of(handle, ChildProcess, m_process);
 
-    cp->holder()->Unref();
+    cp->isolate_unref();
     cp->m_vholder.Release();
 }
 
@@ -73,25 +73,47 @@ result_t ChildProcess::fill_stdio(v8::Local<v8::Object> options)
     uv_options.stdio = stdios;
     uv_options.stdio_count = 3;
 
+#ifndef _WIN32
+    int32_t pty_cnt = 0;
+    for (i = 0; i < 3; i++)
+        if (stddefs[i].type() == Variant::VT_String && stddefs[i].string() == "pty")
+            pty_cnt++;
+
+    if (pty_cnt == 3) {
+        m_pty = true;
+
+        for (i = 0; i < 3; i++) {
+            stdios[i].flags = UV_INHERIT_FD;
+            stdios[i].data.fd = i;
+        }
+
+        return 0;
+    }
+
+    if (pty_cnt > 0)
+        return CHECK_ERROR(Runtime::setError("ChildProcess: every element of stdio must be \'pty\'."));
+#endif
+
     for (i = 0; i < 3; i++) {
-        if (stddefs[i].type() == Variant::VT_String) {
-            exlib::string s = stddefs[i].string();
+        if (stddefs[i].type() == Variant::VT_Integer) {
+            stdios[i].flags = UV_INHERIT_FD;
+            stdios[i].data.fd = stddefs[i].intVal();
+        } else {
+            exlib::string s = stddefs[i].type() != Variant::VT_String ? "pipe" : stddefs[i].string();
 
             if (s == "ignore") {
                 stdios[i].flags = UV_IGNORE;
             } else if (s == "pipe") {
+                hr = UVStream::create_pipe(m_stdio[i]);
+                if (hr < 0)
+                    return hr;
+
                 stdios[i].flags = (uv_stdio_flags)(UV_CREATE_PIPE | UV_READABLE_PIPE | UV_WRITABLE_PIPE);
-                obj_ptr<UVStream> p = new UVStream();
-                stdios[i].data.stream = (uv_stream_t*)&p->m_pipe;
-                m_stdio[i] = p;
-            } else // if (s == "inherit")
-            {
+                stdios[i].data.stream = (uv_stream_t*)&m_stdio[i]->m_pipe;
+            } else {
                 stdios[i].flags = UV_INHERIT_FD;
                 stdios[i].data.fd = i;
             }
-        } else if (stddefs[i].type() == Variant::VT_Integer) {
-            stdios[i].flags = UV_INHERIT_FD;
-            stdios[i].data.fd = stddefs[i].intVal();
         }
     }
 
@@ -160,7 +182,7 @@ result_t ChildProcess::fill_env(v8::Local<v8::Object> options)
         ks.append(vs);
         ks.append(1, 0);
 
-        _envs[i] = &envStr[i][0];
+        _envs[i] = (char*)envStr[i].c_str();
     }
 
     _envs[i] = NULL;
@@ -185,7 +207,7 @@ result_t ChildProcess::fill_arg(exlib::string command, v8::Local<v8::Array> args
         if (hr < 0)
             return hr;
 
-        _args[i + 1] = &argStr[i][0];
+        _args[i + 1] = (char*)argStr[i].c_str();
     }
     _args[i + 1] = NULL;
 
@@ -221,6 +243,7 @@ result_t ChildProcess::fill_opt(v8::Local<v8::Object> options)
     return 0;
 }
 
+extern "C" int pty_spawn(uv_loop_t* loop, uv_process_t* process, const uv_process_options_t* options, int* terminalfd);
 result_t ChildProcess::spawn(exlib::string command, v8::Local<v8::Array> args, v8::Local<v8::Object> options)
 {
     result_t hr;
@@ -242,16 +265,27 @@ result_t ChildProcess::spawn(exlib::string command, v8::Local<v8::Array> args, v
     if (hr < 0)
         return hr;
 
-    isolate->Ref();
+    isolate_ref();
     m_vholder = new ValueHolder(wrap());
-    return uv_call([&] {
-        int32_t err = ::uv_spawn(s_uv_loop, &m_process, &uv_options);
-        if (err < 0) {
-            uv_close((uv_handle_t*)&m_process, on_uv_close);
-            return CHECK_ERROR(Runtime::setError(uv_strerror(err)));
-        }
 
-        return 0;
+    return uv_call([&] {
+        int32_t err;
+
+#ifndef _WIN32
+        if (m_pty) {
+            int32_t terminalfd;
+            err = pty_spawn(s_uv_loop, &m_process, &uv_options, &terminalfd);
+            if (err >= 0) {
+                UVStream::uv_pipe(m_stdio[0], terminalfd);
+                m_stdio[1] = m_stdio[0];
+            }
+        } else
+#endif
+            err = uv_spawn(s_uv_loop, &m_process, &uv_options);
+
+        if (err < 0)
+            uv_close((uv_handle_t*)&m_process, on_uv_close);
+        return err;
     });
 }
 

@@ -26,7 +26,6 @@
 #include <io.h>
 
 #include "utf8.h"
-#include "process_win.h"
 #else
 
 #include <unistd.h>
@@ -228,55 +227,33 @@ result_t process_base::get_platform(exlib::string& retVal)
 
 result_t process_base::get_pid(int32_t& retVal)
 {
-#ifdef _WIN32
-    retVal = GetCurrentProcessId();
-#else
-    retVal = getpid();
-#endif
-
+    retVal = uv_os_getpid();
     return 0;
 }
 
 result_t process_base::get_ppid(int32_t& retVal)
 {
-#ifdef _WIN32
-    retVal = (int32_t)GetParentProcessID();
-#else
-    retVal = getppid();
-#endif
-
+    retVal = uv_os_getppid();
     return 0;
 }
 
 result_t process_base::get_stdin(obj_ptr<Stream_base>& retVal)
 {
-    Isolate* isolate = Isolate::current();
-
-    if (!isolate->m_stdin)
-        isolate->m_stdin = new UVStream(_fileno(stdin));
-    retVal = isolate->m_stdin;
+    Isolate::current()->get_stdin(retVal);
 
     return 0;
 }
 
 result_t process_base::get_stdout(obj_ptr<Stream_base>& retVal)
 {
-    Isolate* isolate = Isolate::current();
-
-    if (!isolate->m_stdout)
-        isolate->m_stdout = new UVStream(_fileno(stdout));
-    retVal = isolate->m_stdout;
+    Isolate::current()->get_stdout(retVal);
 
     return 0;
 }
 
 result_t process_base::get_stderr(obj_ptr<Stream_base>& retVal)
 {
-    Isolate* isolate = Isolate::current();
-
-    if (!isolate->m_stderr)
-        isolate->m_stderr = new UVStream(_fileno(stderr));
-    retVal = isolate->m_stderr;
+    Isolate::current()->get_stderr(retVal);
 
     return 0;
 }
@@ -304,13 +281,12 @@ result_t process_base::exit()
 
     gui_flush();
 
-#ifdef _WIN32
-    TerminateProcess(GetCurrentProcess(), code);
-#else
+#ifndef _WIN32
     if (g_in_readline && isatty(_fileno(stdin)))
         rl_deprep_terminal();
-    ::_exit(code);
 #endif
+
+    ::exit(code);
 
     return 0;
 }
@@ -330,6 +306,26 @@ result_t process_base::memoryUsage(v8::Local<v8::Object>& retVal)
 result_t process_base::uptime(double& retVal)
 {
     return os_base::uptime(retVal);
+}
+
+result_t process_base::cwd(exlib::string& retVal)
+{
+    char buf[1024] = "";
+    size_t size = sizeof(buf);
+
+    if (uv_cwd(buf, &size))
+        return CHECK_ERROR(LastError());
+
+    retVal = buf;
+    return 0;
+}
+
+result_t process_base::chdir(exlib::string directory)
+{
+    if (uv_chdir(directory.c_str()))
+        return CHECK_ERROR(LastError());
+
+    return 0;
 }
 
 result_t process_base::nextTick(v8::Local<v8::Function> func, OptArgs args)

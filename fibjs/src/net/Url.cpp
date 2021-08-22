@@ -8,6 +8,7 @@
 #include "object.h"
 #include "Url.h"
 #include "parse.h"
+#include "path.h"
 #include "ifs/encoding.h"
 #include "ifs/url.h"
 #include "ifs/punycode.h"
@@ -40,6 +41,22 @@ result_t url_base::parse(exlib::string url, bool parseQueryString,
     retVal = u;
 
     return 0;
+}
+
+result_t url_base::resolve(exlib::string _from, exlib::string to,
+    exlib::string& retVal)
+{
+    obj_ptr<Url> u = new Url();
+    result_t hr = u->parse(_from, false, false);
+    if (hr < 0)
+        return hr;
+
+    obj_ptr<UrlObject_base> u1;
+    hr = u->resolve(to, u1);
+    if (hr < 0)
+        return hr;
+
+    return u1->toString(retVal);
 }
 
 static const char* pathTable = " !  $%& ()*+,-./0123456789:; =  @ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_ abcdefghijklmnopqrstuvwxyz{|}~ ";
@@ -115,7 +132,7 @@ void Url::parseProtocol(const char*& url)
 
     while ((ch = *p)
         && (qisascii(ch) || qisdigit(ch) || ch == '.' || ch == '+'
-            || ch == '-'))
+               || ch == '-'))
         p++;
 
     if (ch == ':') {
@@ -170,6 +187,10 @@ void Url::parseHost(const char*& url, exlib::string& hostname, exlib::string& po
             ch = *++p1;
         else
             url++;
+    } else if (*p1 == '%' && p1[1] == '2' && (p1[2] == 'f' || p1[2] == 'F')) {
+        while ((ch = *p1)
+            && (qisascii(ch) || qisdigit(ch) || ch == '.' || ch == '_' || ch == '-' || ch == '%' || ch < 0))
+            p1++;
     } else {
         while ((ch = *p1)
             && (qisascii(ch) || qisdigit(ch) || ch == '.' || ch == '_' || ch == '-' || ch < 0))
@@ -185,13 +206,17 @@ void Url::parseHost(const char*& url, exlib::string& hostname, exlib::string& po
 
     if (*url == '[')
         hostname.assign(url + 1, p1 - url - 2);
-    else
+    else if (*url == '%') {
+        hostname.assign(url, p1 - url);
+        encoding_base::decodeURI(hostname, hostname);
+    } else
         hostname.assign(url, p1 - url);
 
     if (hostname.length() > 0) {
-        qstrlwr(&hostname[0]);
+        qstrlwr(hostname.c_buffer());
         punycode_base::toASCII(hostname, hostname);
     }
+
     if (p2)
         port.assign(p1 + 1, p2 - p1 - 1);
     else
@@ -283,17 +308,18 @@ void Url::trimUrl(exlib::string url, exlib::string& retVal)
     int32_t lastPos = 0;
     int32_t i;
     bool isWs;
+    unsigned char* _url = (unsigned char*)url.c_buffer();
 
     bool inWs = false;
 
     for (i = 0; i < (int32_t)url.length(); i++) {
-        isWs = url[i] == 32 || url[i] == 9 || url[i] == 13 || url[i] == 10 || url[i] == 12;
+        isWs = _url[i] == 32 || _url[i] == 9 || _url[i] == 13 || _url[i] == 10 || _url[i] == 12;
 
-        if (*(unsigned char*)&url[i] == 0xc2 && *(unsigned char*)&url[i + 1] == 0xa0) {
+        if (_url[i] == 0xc2 && _url[i + 1] == 0xa0) {
             isWs = true;
             i++;
         }
-        if (*(unsigned char*)&url[i] == 239 && *(unsigned char*)&url[i + 1] == 187 && *(unsigned char*)&url[i + 2] == 191) {
+        if (_url[i] == 239 && _url[i + 1] == 187 && _url[i + 2] == 191) {
             isWs = true;
             i += 2;
         }
@@ -313,8 +339,8 @@ void Url::trimUrl(exlib::string url, exlib::string& retVal)
                 inWs = true;
             }
         }
-        if (url[i] == 92 && i - lastPos > 0)
-            url[i] = '/';
+        if (_url[i] == 92 && i - lastPos > 0)
+            _url[i] = '/';
     }
 
     if (start != -1) {
@@ -427,7 +453,7 @@ bool getString(Isolate* isolate, v8::Local<v8::Object>& args,
     JSValue v = args->Get(isolate->NewString(key));
 
     if (!v.IsEmpty() && (v->IsString() || v->IsStringObject())) {
-        retVal = ToCString(v8::String::Utf8Value(isolate->m_isolate, v));
+        retVal = isolate->toString(v);
         return true;
     }
 
@@ -543,7 +569,7 @@ result_t Url::normalize()
     bool bRoot = false;
 
     str.resize(m_pathname.length());
-    pstr = &str[0];
+    pstr = str.c_buffer();
 
     if (isUrlSlash(p1[0])) {
         pstr[pos++] = URL_SLASH;
@@ -619,6 +645,8 @@ result_t Url::get_href(exlib::string& retVal)
     }
 
     get__host(str);
+    if (str[0] == '/')
+        encoding_base::encodeURIComponent(str, str);
     retVal.append(str);
 
     get_path(str);
@@ -651,7 +679,7 @@ result_t Url::set_protocol(exlib::string newVal)
     m_protocol = newVal;
     m_defslashes = false;
     if (m_protocol.length() > 0) {
-        qstrlwr(&m_protocol[0]);
+        qstrlwr(m_protocol.c_buffer());
 
         if (m_protocol[m_protocol.length() - 1] != ':')
             m_protocol.append(1, ':');
@@ -854,7 +882,7 @@ result_t Url::set_query(v8::Local<v8::Value> newVal)
     if (!newVal.IsEmpty()) {
         if (newVal->IsString() || newVal->IsStringObject()) {
             Isolate* isolate = holder();
-            m_query = ToCString(v8::String::Utf8Value(isolate->m_isolate, newVal));
+            m_query = isolate->toString(newVal);
 
             if (m_queryParsed) {
                 m_queryParsed = new HttpCollection();

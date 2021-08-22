@@ -3,18 +3,34 @@ var path = require("path");
 var os = require("os");
 var coroutine = require("coroutine");
 var fs = require("fs");
-var mkdirp = require('@fibjs/mkdirp');
+var hash = require("hash");
 
 var cef_path = path.join(__dirname, "../temp/cef", os.type());
 
 gui.config({
-    // "cache_path": `${os.homedir()}/.cache`,
+    "cache_path": `${os.homedir()}/.cache`,
     "cef_path": cef_path,
     // "proxy": {
     //     mode: "fixed_servers",
     //     server: "192.168.65.5:1087"
     // }
 });
+
+var langs = [
+    "ca",
+    "de",
+    "en",
+    "es",
+    "fr",
+    "gl",
+    "it",
+    "ru",
+    "ja",
+    "ko",
+    "zh-tw",
+];
+
+var docs_path = path.join(__dirname, "../docs/web/dist");
 
 function wait(win, selector) {
     do {
@@ -24,7 +40,7 @@ function wait(win, selector) {
                 nodeId: doc.root.nodeId,
                 selector: "select.goog-te-combo"
             });
-        } catch (e) {};
+        } catch (e) { };
         coroutine.sleep(100);
     } while (e && e.nodeId == 0);
 
@@ -45,17 +61,19 @@ function getOuterHTML(win, selector) {
     return html.outerHTML;
 }
 
-function translate(fname, lang, overwrite) {
-    console.notice(lang, fname);
-
-    var out_fname = path.join(__dirname, "../docs/web/dist", lang, fname);
-    fname = path.join(__dirname, "../docs/web/dist", fname);
-    if (!overwrite && fs.exists(out_fname))
+function translate(fname, lang) {
+    var out_fname = path.join(docs_path, lang, fname);
+    fname = path.join(docs_path, fname);
+    if (fs.exists(out_fname))
         return true;
 
+    console.log("translate", lang, fname);
+
     if (path.extname(fname) != ".html") {
-        mkdirp(path.dirname(out_fname));
-        fs.copy(fname, out_fname);
+        fs.mkdir(path.dirname(out_fname), {
+            recursive: true
+        });
+        fs.copyFile(fname, out_fname);
         return true;
     }
 
@@ -140,8 +158,10 @@ function translate(fname, lang, overwrite) {
             fix_res();
             fix_lang();
 
-            console.log("write", out_fname);
-            mkdirp(path.dirname(out_fname));
+            console.notice("update", out_fname);
+            fs.mkdir(path.dirname(out_fname), {
+                recursive: true
+            });
             fs.writeFile(out_fname, html);
             done = true;
         } else
@@ -173,57 +193,75 @@ function translate(fname, lang, overwrite) {
     });
 
     ev.wait();
-
     return done;
 }
 
-function clean_folder(p) {
-    var dir = fs.readdir(p);
-    console.log("clean", p);
-    dir.forEach(function (name) {
-        var fname = path.join(p, name);
-        var f = fs.stat(fname);
-        if (f.isDirectory()) {
-            clean_folder(fname);
-            fs.rmdir(fname);
-        } else
-            fs.unlink(fname);
-    });
+function check_docs() {
+    function check_folder(lang, p) {
+        if (!fs.exists(path.join(docs_path, lang, p)))
+            return;
+
+        var dir = fs.readdir(path.join(docs_path, lang, p));
+        dir.forEach(function (name) {
+            var fname = path.join(p, name);
+            var f = fs.stat(path.join(docs_path, lang, fname));
+            if (f.isDirectory()) {
+                check_folder(lang, fname);
+            } else {
+                if (!fs.exists(path.join(docs_path, fname))) {
+                    console.log("delete", path.join(docs_path, lang, fname));
+                    fs.unlink(path.join(docs_path, lang, fname));
+                }
+            }
+        });
+    }
+
+    langs.forEach(lang => check_folder(lang, ""));
 }
 
-function queue_docs(p, overwrite) {
-    var dir = fs.readdir(path.join(__dirname, "../docs/web/dist", p));
-    dir.forEach(function (name) {
-        var fname = path.join(p, name);
-        var f = fs.stat(path.join(__dirname, "../docs/web/dist", fname));
-        if (f.isDirectory()) {
-            queue_docs(fname, overwrite);
-        } else
-            queue_one(fname, overwrite);
-    });
-}
-
-var langs = [
-    "en",
-    "ja",
-    "de",
-    "es",
-    "fr",
-    "ko",
-    "it",
-    "ru",
-];
-
-// langs.forEach(lang => clean_folder(path.join(__dirname, "../docs/web/dist", lang)));
+check_docs();
 
 var trans_queue = [];
+var docs_md5;
+var new_docs_md5 = {};
 
-function queue_one(fname, overwrite) {
-    langs.forEach(lang => trans_queue.push([
-        fname,
-        lang,
-        overwrite
-    ]));
+function queue_one(fname) {
+    var md5 = hash.md5(fs.readFile(path.join(docs_path, fname))).digest().hex();
+    new_docs_md5[md5] = true;
+
+    langs.forEach(lang => {
+        trans_queue.push([
+            fname,
+            lang
+        ])
+    });
+
+    if (!docs_md5[md5]) {
+        langs.forEach(lang => {
+            try {
+                console.log("delete", path.join(docs_path, lang, fname));
+                fs.unlink(path.join(docs_path, lang, fname));
+            } catch (e) { }
+        });
+    }
+}
+
+function queue_docs(p) {
+    var dir = fs.readdir(path.join(docs_path, p));
+    dir.forEach(function (name) {
+        var fname = path.join(p, name);
+        var f = fs.stat(path.join(docs_path, fname));
+        if (f.isDirectory()) {
+            queue_docs(fname);
+        } else
+            queue_one(fname);
+    });
+}
+
+try {
+    docs_md5 = JSON.parse(fs.readTextFile(path.join(docs_path, "docs_md5.json")));
+} catch (e) {
+    docs_md5 = {};
 }
 
 queue_one("index.html");
@@ -231,7 +269,10 @@ queue_one("support.html");
 
 queue_docs("docs");
 
-// queue_one("docs/manual/module/ifs/child_process.md.html", true);
+if (JSON.stringify(new_docs_md5) != JSON.stringify(docs_md5)) {
+    console.notice("update", path.join(docs_path, "docs_md5.json"));
+    fs.writeTextFile(path.join(docs_path, "docs_md5.json"), JSON.stringify(new_docs_md5));
+}
 
 trans_queue = trans_queue.sort((n1, n2) => {
     if (n1[0] < n2[0])

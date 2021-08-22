@@ -22,12 +22,12 @@ class gui_base : public object_base {
 
 public:
     enum {
-        _IE7 = 7000,
-        _IE8 = 8000,
-        _IE9 = 9000,
-        _IE10 = 10000,
-        _IE11 = 11000,
-        _EDGE = 11001
+        C_IE7 = 7000,
+        C_IE8 = 8000,
+        C_IE9 = 9000,
+        C_IE10 = 10000,
+        C_IE11 = 11000,
+        C_EDGE = 11001
     };
 
 public:
@@ -67,12 +67,12 @@ inline ClassInfo& gui_base::class_info()
     };
 
     static ClassData::ClassConst s_const[] = {
-        { "IE7", _IE7 },
-        { "IE8", _IE8 },
-        { "IE9", _IE9 },
-        { "IE10", _IE10 },
-        { "IE11", _IE11 },
-        { "EDGE", _EDGE }
+        { "IE7", C_IE7 },
+        { "IE8", C_IE8 },
+        { "IE9", C_IE9 },
+        { "IE10", C_IE10 },
+        { "IE11", C_IE11 },
+        { "EDGE", C_EDGE }
     };
 
     static ClassData s_cd = {

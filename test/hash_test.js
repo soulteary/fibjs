@@ -4,84 +4,155 @@ test.setup();
 var hash = require('hash');
 var crypto = require('crypto');
 
+var rsa1024_pem = "-----BEGIN RSA PRIVATE KEY-----\n" +
+    "MIICXQIBAAKBgQDSbmW8qlarL0lLu1XYcg+ocJgcuq5K7EgLcXyy2shAsko7etmZ\n" +
+    "NP3opOeGw58E7tjVsjuadPQ8Hf+9wd316RYwShklDDsy4Hwp4z9afnj56UmvkM0u\n" +
+    "TlsymlIbFftme6aJcYbnX9fdin78Rsa0MbzQbFdeLHsy5zKjsrbm4TS5bwIDAQAB\n" +
+    "AoGAagN2O9NxMHL1MTMi75WfL9Pxvl+KWXKqZSF6mjzAsF9iKI8euyHIXYFepzU8\n" +
+    "kual1RsjDhCnzvWqFvZplW8lXqrHf/P+rS/9Y4gBUw6pjnI/DnFIRwWHRvrUHHSC\n" +
+    "fWOdTCIKdOTkgLZuGFuhEY3RMIW0WSYejjLtftwy0RVxAzkCQQDprgbWqZ/BaafV\n" +
+    "uKKA3shUWWRst/2hV7qDus6YfEj6GfUZHEoNJW4BSuZHUiG4Cdxr0zTLtIP7tNSz\n" +
+    "rCM7FbFrAkEA5ofkxFKdPBD0CQHMb9q13AMHUVe0rJ+hSjqqIBrmqApUOneyAcMV\n" +
+    "76M0QyIQnI2p3POa4Qu/7XChDwRVl7LlDQJBANplxohsAh5fI/hQVriA/tQus/gU\n" +
+    "QdzARFaHijzjs8Tj67mrQd5lhBl7KhuwPEloFfVEcUyNiuj9yeme0VKQZL8CQQCh\n" +
+    "qCfm99vk1Cqc6lL3GRKwPrtx8iPzbVlIWU0ViGe47M1V1rvP+oK2cebjMM8fSUQV\n" +
+    "egpgx8GF+pYmlq6C22M9AkB2oRCDE2Y5UWsXizvvqFOp4LqgQOKVrwS+lVvYXZm/\n" +
+    "AA4uMJDro6IBkrUGJgYepTLQ16o2a2WwtK4ERlBm+pnC\n" +
+    "-----END RSA PRIVATE KEY-----\n";
+
+var pub_rsa1024_pem = "-----BEGIN PUBLIC KEY-----\n" +
+    "MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDSbmW8qlarL0lLu1XYcg+ocJgc\n" +
+    "uq5K7EgLcXyy2shAsko7etmZNP3opOeGw58E7tjVsjuadPQ8Hf+9wd316RYwShkl\n" +
+    "DDsy4Hwp4z9afnj56UmvkM0uTlsymlIbFftme6aJcYbnX9fdin78Rsa0MbzQbFde\n" +
+    "LHsy5zKjsrbm4TS5bwIDAQAB\n" +
+    "-----END PUBLIC KEY-----\n";
+
+var ec_pem = "-----BEGIN EC PRIVATE KEY-----\n" +
+    "MIHcAgEBBEIB+QhtQdd9bjWeN2mgq6qoqW51ygslLwP+gwTCSP4ZVpcU0pxwigXm\n" +
+    "Ioa7Zzr2Q0OOjzdH/vDIaV9FzOySWSKTVJOgBwYFK4EEACOhgYkDgYYABAE3zTRb\n" +
+    "rr5Rsa0xqF4Mn0gBoETTQ5zt6zd5O+LqyiXVUteEWIXZ0sJvdQZvhdZfk9VypQGN\n" +
+    "skZ8xvcNVJL6PHNMCwEgR6q67gepHZBFAd75Vt/lCJJOB7SnVHk8Dfu5t49q4Gb2\n" +
+    "EdX30QGqQ71qihogY6Jqlmn8aJAZGwyNHPeX+n+F1A==\n" +
+    "-----END EC PRIVATE KEY-----\n";
+
+var pub_ec_pem = "-----BEGIN PUBLIC KEY-----\n" +
+    "MIGbMBAGByqGSM49AgEGBSuBBAAjA4GGAAQBN800W66+UbGtMaheDJ9IAaBE00Oc\n" +
+    "7es3eTvi6sol1VLXhFiF2dLCb3UGb4XWX5PVcqUBjbJGfMb3DVSS+jxzTAsBIEeq\n" +
+    "uu4HqR2QRQHe+Vbf5QiSTge0p1R5PA37ubePauBm9hHV99EBqkO9aooaIGOiapZp\n" +
+    "/GiQGRsMjRz3l/p/hdQ=\n" +
+    "-----END PUBLIC KEY-----\n";
+
+
+var sm2_pem = "-----BEGIN EC PRIVATE KEY-----\n" +
+    "MHcCAQEEIH3EUWpWsnLGl6SkGBnG5lPEIvdyql56aHQMCCt7xDqCoAoGCCqBHM9V\n" +
+    "AYItoUQDQgAE1KnIoMvdNODUrcEzQNnHbplwxNNyuHwIUnU0oNQ/0R1z97YIe/k8\n" +
+    "HX6wrPMUazfS1PVd/A9R8gadvlURQ3lufg==\n" +
+    "-----END EC PRIVATE KEY-----\n";
+
+var pub_sm2_pem = "-----BEGIN PUBLIC KEY-----\n" +
+    "MFkwEwYHKoZIzj0CAQYIKoEcz1UBgi0DQgAE1KnIoMvdNODUrcEzQNnHbplwxNNy\n" +
+    "uHwIUnU0oNQ/0R1z97YIe/k8HX6wrPMUazfS1PVd/A9R8gadvlURQ3lufg==\n" +
+    "-----END PUBLIC KEY-----\n";
+
 describe("hash", () => {
     function hash_test(o) {
         assert.equal(o.hash, hash.digest(hash[o.name], o.text).digest().hex());
-        assert.equal(o.hash, hash.digest(hash[o.name],
-            new Buffer(o.text)).digest().hex());
-        assert.equal(o.hash, hash[o.name.toLowerCase()](o.text).digest().hex());
         assert.equal(o.hash, hash.digest(hash[o.name]).update(o.text).digest().hex());
+        assert.equal(o.hash, hash[o.name.toLowerCase()](o.text).digest().hex());
+        assert.equal(o.hash, hash[o.name.toLowerCase()]().update(o.text).digest().hex());
         assert.equal(o.hash, crypto.createHash(o.name).update(o.text).digest().hex());
-        assert.equal(o.hash, crypto.createHash(o.name.toLowerCase()).update(o.text).digest().hex());
 
         assert.equal(o.base64, hash.digest(hash[o.name], o.text).digest().base64());
-        assert.equal(o.base64, hash.digest(hash[o.name],
-            new Buffer(o.text)).digest().base64());
-        assert.equal(o.base64, hash[o.name.toLowerCase()](o.text).digest().base64());
         assert.equal(o.base64, hash.digest(hash[o.name]).update(o.text).digest().base64());
+        assert.equal(o.base64, hash[o.name.toLowerCase()](o.text).digest().base64());
+        assert.equal(o.base64, hash[o.name.toLowerCase()]().update(o.text).digest().base64());
         assert.equal(o.base64, crypto.createHash(o.name).update(o.text).digest().base64());
-        assert.equal(o.base64, crypto.createHash(o.name.toLowerCase()).update(o.text).digest().base64());
-
 
         assert.equal(o.hash, hash.digest(hash[o.name], o.text).digest('buffer').hex());
-        assert.equal(o.hash, hash.digest(hash[o.name],
-            new Buffer(o.text)).digest('buffer').hex());
-        assert.equal(o.hash, hash[o.name.toLowerCase()](o.text).digest('buffer').hex());
         assert.equal(o.hash, hash.digest(hash[o.name]).update(o.text).digest('buffer').hex());
+        assert.equal(o.hash, hash[o.name.toLowerCase()](o.text).digest('buffer').hex());
+        assert.equal(o.hash, hash[o.name.toLowerCase()]().update(o.text).digest('buffer').hex());
         assert.equal(o.hash, crypto.createHash(o.name).update(o.text).digest('buffer').hex());
-        assert.equal(o.hash, crypto.createHash(o.name.toLowerCase()).update(o.text).digest('buffer').hex());
 
         assert.equal(o.base64, hash.digest(hash[o.name], o.text).digest('buffer').base64());
-        assert.equal(o.base64, hash.digest(hash[o.name],
-            new Buffer(o.text)).digest('buffer').base64());
-        assert.equal(o.base64, hash[o.name.toLowerCase()](o.text).digest('buffer').base64());
         assert.equal(o.base64, hash.digest(hash[o.name]).update(o.text).digest('buffer').base64());
+        assert.equal(o.base64, hash[o.name.toLowerCase()](o.text).digest('buffer').base64());
+        assert.equal(o.base64, hash[o.name.toLowerCase()]().update(o.text).digest('buffer').base64());
         assert.equal(o.base64, crypto.createHash(o.name).update(o.text).digest('buffer').base64());
-        assert.equal(o.base64, crypto.createHash(o.name.toLowerCase()).update(o.text).digest('buffer').base64());
-
 
         assert.equal(o.hash, hash.digest(hash[o.name], o.text).digest('hex'));
-        assert.equal(o.hash, hash.digest(hash[o.name],
-            new Buffer(o.text)).digest('hex'));
-        assert.equal(o.hash, hash[o.name.toLowerCase()](o.text).digest('hex'));
         assert.equal(o.hash, hash.digest(hash[o.name]).update(o.text).digest('hex'));
+        assert.equal(o.hash, hash[o.name.toLowerCase()](o.text).digest('hex'));
+        assert.equal(o.hash, hash[o.name.toLowerCase()]().update(o.text).digest('hex'));
         assert.equal(o.hash, crypto.createHash(o.name).update(o.text).digest('hex'));
-        assert.equal(o.hash, crypto.createHash(o.name.toLowerCase()).update(o.text).digest('hex'));
-
 
         assert.equal(o.base64, hash.digest(hash[o.name], o.text).digest('base64'));
-        assert.equal(o.base64, hash.digest(hash[o.name],
-            new Buffer(o.text)).digest('base64'));
-        assert.equal(o.base64, hash[o.name.toLowerCase()](o.text).digest('base64'));
         assert.equal(o.base64, hash.digest(hash[o.name]).update(o.text).digest('base64'));
+        assert.equal(o.base64, hash[o.name.toLowerCase()](o.text).digest('base64'));
+        assert.equal(o.base64, hash[o.name.toLowerCase()]().update(o.text).digest('base64'));
         assert.equal(o.base64, crypto.createHash(o.name).update(o.text).digest('base64'));
-        assert.equal(o.base64, crypto.createHash(o.name.toLowerCase()).update(o.text).digest('base64'));
+
+        var s = crypto.createHash(o.name).update(o.text).sign(rsa1024_pem);
+        assert.ok(crypto.createHash(o.name).update(o.text).verify(pub_rsa1024_pem, s));
+        assert.ok(new crypto.PKey(pub_rsa1024_pem).verify(crypto.createHash(o.name).update(o.text).digest(), s, hash[o.name]));
+
+        var s = crypto.createHash(o.name).update(o.text).sign(ec_pem);
+        assert.ok(crypto.createHash(o.name).update(o.text).verify(pub_ec_pem, s));
+        assert.ok(new crypto.PKey(pub_ec_pem).verify(crypto.createHash(o.name).update(o.text).digest(), s, hash[o.name]));
+
+        var s = crypto.createHash(o.name).update(o.text).sign(sm2_pem);
+        assert.ok(crypto.createHash(o.name).update(o.text).verify(pub_sm2_pem, s));
+        assert.ok(new crypto.PKey(pub_sm2_pem).verify(crypto.createHash(o.name).update(o.text).digest(), s, hash[o.name]));
     }
 
     function hmac_test(o) {
+        assert.equal(o.hmac, hash.hmac(hash[o.name], o.key, o.text).digest().hex());
         assert.equal(o.hmac, hash.hmac(hash[o.name], o.key).update(o.text).digest().hex());
+        assert.equal(o.hmac, hash['hmac_' + o.name.toLowerCase()](o.key, o.text).digest().hex());
         assert.equal(o.hmac, hash['hmac_' + o.name.toLowerCase()](o.key).update(o.text).digest().hex());
         assert.equal(o.hmac, crypto.createHmac(o.name, o.key).update(o.text).digest().hex());
 
+        assert.equal(o.base64, hash.hmac(hash[o.name], o.key, o.text).digest().base64());
         assert.equal(o.base64, hash.hmac(hash[o.name], o.key).update(o.text).digest().base64());
+        assert.equal(o.base64, hash['hmac_' + o.name.toLowerCase()](o.key, o.text).digest().base64());
         assert.equal(o.base64, hash['hmac_' + o.name.toLowerCase()](o.key).update(o.text).digest().base64());
         assert.equal(o.base64, crypto.createHmac(o.name, o.key).update(o.text).digest().base64());
 
+        assert.equal(o.hmac, hash.hmac(hash[o.name], o.key, o.text).digest('buffer').hex());
         assert.equal(o.hmac, hash.hmac(hash[o.name], o.key).update(o.text).digest('buffer').hex());
+        assert.equal(o.hmac, hash['hmac_' + o.name.toLowerCase()](o.key, o.text).digest('buffer').hex());
         assert.equal(o.hmac, hash['hmac_' + o.name.toLowerCase()](o.key).update(o.text).digest('buffer').hex());
         assert.equal(o.hmac, crypto.createHmac(o.name, o.key).update(o.text).digest('buffer').hex());
 
+        assert.equal(o.base64, hash.hmac(hash[o.name], o.key, o.text).digest('buffer').base64());
         assert.equal(o.base64, hash.hmac(hash[o.name], o.key).update(o.text).digest('buffer').base64());
+        assert.equal(o.base64, hash['hmac_' + o.name.toLowerCase()](o.key, o.text).digest('buffer').base64());
         assert.equal(o.base64, hash['hmac_' + o.name.toLowerCase()](o.key).update(o.text).digest('buffer').base64());
         assert.equal(o.base64, crypto.createHmac(o.name, o.key).update(o.text).digest('buffer').base64());
 
+        assert.equal(o.hmac, hash.hmac(hash[o.name], o.key, o.text).digest('hex'));
         assert.equal(o.hmac, hash.hmac(hash[o.name], o.key).update(o.text).digest('hex'));
+        assert.equal(o.hmac, hash['hmac_' + o.name.toLowerCase()](o.key, o.text).digest('hex'));
         assert.equal(o.hmac, hash['hmac_' + o.name.toLowerCase()](o.key).update(o.text).digest('hex'));
         assert.equal(o.hmac, crypto.createHmac(o.name, o.key).update(o.text).digest('hex'));
 
+        assert.equal(o.base64, hash.hmac(hash[o.name], o.key, o.text).digest('base64'));
         assert.equal(o.base64, hash.hmac(hash[o.name], o.key).update(o.text).digest('base64'));
+        assert.equal(o.base64, hash['hmac_' + o.name.toLowerCase()](o.key, o.text).digest('base64'));
         assert.equal(o.base64, hash['hmac_' + o.name.toLowerCase()](o.key).update(o.text).digest('base64'));
         assert.equal(o.base64, crypto.createHmac(o.name, o.key).update(o.text).digest('base64'));
+
+        var s = crypto.createHmac(o.name, o.key).update(o.text).sign(rsa1024_pem);
+        assert.ok(crypto.createHmac(o.name, o.key).update(o.text).verify(pub_rsa1024_pem, s));
+        assert.ok(new crypto.PKey(pub_rsa1024_pem).verify(crypto.createHmac(o.name, o.key).update(o.text).digest(), s, hash[o.name]));
+
+        var s = crypto.createHmac(o.name, o.key).update(o.text).sign(ec_pem);
+        assert.ok(crypto.createHmac(o.name, o.key).update(o.text).verify(pub_ec_pem, s));
+        assert.ok(new crypto.PKey(pub_ec_pem).verify(crypto.createHmac(o.name, o.key).update(o.text).digest(), s, hash[o.name]));
+
+        var s = crypto.createHmac(o.name, o.key).update(o.text).sign(sm2_pem);
+        assert.ok(crypto.createHmac(o.name, o.key).update(o.text).verify(pub_sm2_pem, s));
+        assert.ok(new crypto.PKey(pub_sm2_pem).verify(crypto.createHmac(o.name, o.key).update(o.text).digest(), s, hash[o.name]));
     }
 
     it("md2", () => {
@@ -289,12 +360,12 @@ describe("hash", () => {
             text: '',
             hash: '1ab21d8355cfa17f8e61194831e81a8f22bec8c728fefb747ed035eb5082aa2b',
             base64: 'GrIdg1XPoX+OYRlIMegajyK+yMco/vt0ftA161CCqis='
-        },{
+        }, {
             name: 'SM3',
             text: 'The quick brown fox jumps over the lazy dog',
             hash: '5fdfe814b8573ca021983970fc79b2218c9570369b4859684e2e4c3fc76cb8ea',
             base64: 'X9/oFLhXPKAhmDlw/HmyIYyVcDabSFloTi5MP8dsuOo='
-        },{
+        }, {
             name: 'SM3',
             text: 'The quick brown fox jumps over the lazy cog',
             hash: 'ca27d14a42fc04c1e5ecf574a95a8c2d70ecb5805e9b429026ccac8f28b20098',

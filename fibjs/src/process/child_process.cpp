@@ -14,6 +14,7 @@
 #include "AsyncUV.h"
 #include "MemoryStream.h"
 #include "encoding.h"
+#include "ifs/process.h"
 
 namespace fibjs {
 
@@ -183,19 +184,41 @@ result_t child_process_base::exec(exlib::string command, v8::Local<v8::Object> o
         obj_ptr<NArray> _args;
         exlib::string cmd;
         v8::Local<v8::Array> args = v8::Array::New(isolate->m_isolate);
-        int32_t i;
+        size_t i;
 
         util_base::parseArgs(command, _args);
         if (_args->m_array.size()) {
             cmd = _args->m_array[0].string();
             for (i = 1; i < _args->m_array.size(); i++)
-                args->Set(i - 1, _args->m_array[i]);
+                args->Set((int32_t)i - 1, _args->m_array[i]);
         }
 
         return execFile(cmd, args, options, _retVal, ac);
     }
 
     return execFile(command, v8::Local<v8::Array>(), options, _retVal, ac);
+}
+
+result_t child_process_base::fork(exlib::string module, v8::Local<v8::Array> args, v8::Local<v8::Object> options, obj_ptr<ChildProcess_base>& retVal)
+{
+    Isolate* isolate = Isolate::current();
+    exlib::string exePath;
+    v8::Local<v8::Array> args1 = v8::Array::New(isolate->m_isolate);
+
+    process_base::get_execPath(exePath);
+    args1->Set(0, isolate->NewString(module));
+    if (!args.IsEmpty()) {
+        int32_t len = args->Length();
+        for (int32_t i = 0; i < len; i++)
+            args1->Set(i + 1, args->Get(i));
+    }
+
+    return spawn(exePath, args1, options, retVal);
+}
+
+result_t child_process_base::fork(exlib::string module, v8::Local<v8::Object> options, obj_ptr<ChildProcess_base>& retVal)
+{
+    return fork(module, v8::Local<v8::Array>(), options, retVal);
 }
 
 result_t child_process_base::run(exlib::string command, v8::Local<v8::Array> args,
@@ -264,5 +287,4 @@ result_t child_process_base::run(exlib::string command, v8::Local<v8::Object> op
 {
     return run(command, v8::Local<v8::Array>(), options, retVal, ac);
 }
-
 }

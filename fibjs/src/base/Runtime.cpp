@@ -13,6 +13,7 @@
 #include "Fiber.h"
 #include "SandBox.h"
 #include "HttpClient.h"
+#include "X509Cert.h"
 #include "console.h"
 #include "LruCache.h"
 #include "EventEmitter.h"
@@ -132,12 +133,7 @@ void start(int32_t argc, char** argv, result_t (*jsEntryFiber)(Isolate*), v8::Pl
                 createBasisForFiberLoop(m_get_platform);
 
                 if (pos < argc) {
-                    if (argv[pos][0] == '-')
-                        m_fibjsEntry = argv[pos];
-                    else {
-                        m_fibjsEntry = s_root;
-                        resolvePath(m_fibjsEntry, argv[pos]);
-                    }
+                    m_fibjsEntry = argv[pos];
 
                     if (pos != 1) {
                         int32_t p = 1;
@@ -222,6 +218,8 @@ Isolate::SnapshotJsScope::SnapshotJsScope(Isolate* cur)
 
     fb->m_c_entry_fp_ = _fi.entry_fp;
     fb->m_handler_ = _fi.handle;
+
+    m_isolate->m_isolate->RunMicrotasks();
 }
 
 Isolate::SnapshotJsScope::~SnapshotJsScope()
@@ -267,12 +265,13 @@ Isolate::Isolate(exlib::string jsFilename)
     , m_flake_host(0)
     , m_flake_count(0)
     , m_console_colored(true)
-    , m_loglevel(console_base::_NOTSET)
+    , m_loglevel(console_base::C_NOTSET)
     , m_defaultMaxListeners(10)
     , m_exitCode(0)
     , m_enable_FileSystem(true)
     , m_safe_buffer(false)
     , m_max_buffer_size(-1)
+    , m_ca(new X509Cert())
 {
     m_fname = jsFilename;
 
